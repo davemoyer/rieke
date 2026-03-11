@@ -208,6 +208,182 @@ school_enroll <- enroll_temp %>%
   
 # attend ####
 
+attend_files <- list.files("raw/attend",
+                           pattern = "*.xls*",
+                           full.names = TRUE)
+
+attend_raw <- map(attend_files, function(file) {
+  sheets <- excel_sheets(file)
+  data_sheet <- sheets[!str_detect(sheets, "(?i)note|definition")]
+  read_excel(file, sheet = data_sheet[1], col_types = "text") %>%
+    clean_names() %>%
+    mutate(source_file = basename(file))
+}) %>%
+  bind_rows()
+
+attend_temp <- attend_raw %>%
+  rename(
+    district_name = any_of("district"),
+    school_id     = any_of("institution_id"),
+    school_name   = any_of("institution"),
+    inst_type     = any_of("institution_type"),
+    n_regular     = any_of("number_regular_attenders"),
+    pct_regular   = any_of("percent_regular_attenders"),
+    n_absent      = any_of("number_chronically_absent"),
+    pct_absent    = any_of("percent_chronically_absent")
+  ) %>%
+  mutate(
+    school_year = case_when(
+      str_detect(source_file, "1819") ~ 2019L,
+      str_detect(source_file, "2122") ~ 2022L,
+      str_detect(source_file, "2223") ~ 2023L,
+      str_detect(source_file, "2324") ~ 2024L,
+      str_detect(source_file, "2425") ~ 2025L
+    ),
+    level = case_when(
+      inst_type == "State"    ~ "state",
+      inst_type == "District" ~ "district",
+      TRUE                    ~ "school"
+    ),
+    student_group = case_match(
+      student_group,
+      "All Students"                            ~ "all",
+      "Asian"                                   ~ "asian",
+      "Black/African American"                  ~ "black",
+      "Hispanic/Latino"                         ~ "hispanic",
+      "American Indian/Alaska Native"           ~ "aian",
+      "Multi-Racial"                            ~ "multi",
+      "Native Hawaiian/Pacific Islander"        ~ "nhpi",
+      "White"                                   ~ "white",
+      c("Economically Disadvantaged",
+        "Students Experiencing Poverty")        ~ "eco_dis",
+      c("English Learner", "English Learners")  ~ "el",
+      "Ever English Learners"                   ~ "ever_el",
+      "Students with Disabilities"              ~ "swd",
+      "Talented and Gifted"                     ~ "tag",
+      "Homeless"                                ~ "homeless",
+      "Migrant"                                 ~ "migrant",
+      "Female"                                  ~ "female",
+      "Male"                                    ~ "male",
+      "Non-Binary"                              ~ "non_binary",
+      "Foster Care"                             ~ "foster_care",
+      "Underserved Races/Ethnicities"           ~ "underserved_race",
+      "Combined Disadvantaged"                  ~ "combined_dis",
+      "Military Connected"                      ~ "military",
+      "Recent Arrivers"                         ~ "recent_arrivers",
+      "Currently or Formerly Incarcerated"      ~ "incarcerated",
+      .default = str_to_lower(str_replace_all(student_group, "[ /]", "_"))
+    ),
+    district_id = as.integer(district_id),
+    school_id   = as.integer(school_id),
+    n_regular   = as.numeric(n_regular),
+    pct_regular = as.numeric(pct_regular),
+    n_absent    = as.numeric(n_absent),
+    pct_absent  = as.numeric(pct_absent)
+  ) %>%
+  select(-source_file, -any_of(c("report_year", "students_included", "inst_type")))
+
+district_attend <- attend_temp %>% filter(level == "district")
+school_attend   <- attend_temp %>% filter(level == "school")
+
+
 # tests ####
+
+test_files <- list.files("raw/tests",
+                         pattern = "*.xls*",
+                         full.names = TRUE)
+
+tests_raw <- map(test_files, function(file) {
+  sheets <- excel_sheets(file)
+  data_sheet <- sheets[!str_detect(sheets, "(?i)definition|note")]
+  read_excel(file, sheet = data_sheet[1], col_types = "text") %>%
+    clean_names() %>%
+    mutate(source_file = basename(file))
+}) %>%
+  bind_rows()
+
+tests_temp <- tests_raw %>%
+  rename(
+    district_name      = any_of("district"),
+    school_name        = any_of("school"),
+    n_proficient       = any_of("number_proficient"),
+    pct_proficient     = any_of("percent_proficient_level_3_or_4"),
+    n_level_4          = any_of("number_level_4"),
+    pct_level_4        = any_of("percent_level_4"),
+    n_level_3          = any_of("number_level_3"),
+    pct_level_3        = any_of("percent_level_3"),
+    n_level_2          = any_of("number_level_2"),
+    pct_level_2        = any_of("percent_level_2"),
+    n_level_1          = any_of("number_level_1"),
+    pct_level_1        = any_of("percent_level_1"),
+    n_participants     = any_of("number_of_participants")
+  ) %>%
+  mutate(
+    school_year = case_when(
+      str_detect(source_file, "1819") ~ 2019L,
+      str_detect(source_file, "2122") ~ 2022L,
+      str_detect(source_file, "2223") ~ 2023L,
+      str_detect(source_file, "2324") ~ 2024L,
+      str_detect(source_file, "2425") ~ 2025L
+    ),
+    subject = case_match(
+      str_to_lower(subject),
+      "english language arts" ~ "ela",
+      "mathematics"           ~ "math",
+      "science"               ~ "science",
+      .default = str_to_lower(subject)
+    ),
+    student_group = case_match(
+      student_group,
+      "Total Population (All Students)"     ~ "all",
+      "Asian"                               ~ "asian",
+      "Black/African American"              ~ "black",
+      "Hispanic/Latino"                     ~ "hispanic",
+      "American Indian/Alaskan Native"      ~ "aian",
+      "Multi-Racial"                        ~ "multi",
+      "Pacific Islander"                    ~ "nhpi",
+      "White"                               ~ "white",
+      c("Econo. Disadvantaged",
+        "Students Experiencing Poverty")    ~ "eco_dis",
+      "Students Not Experiencing Poverty"   ~ "no_eco_dis",
+      c("LEP", "English Learners",
+        "Current English Learners")         ~ "el",
+      "Students with Disabilities (SWD)"    ~ "swd",
+      "SWD with Accommodations"             ~ "swd_accom",
+      "Students without Disabilities"       ~ "no_swd",
+      "Talented and Gifted (TAG)"           ~ "tag",
+      "Homeless"                            ~ "homeless",
+      "Migrant Education"                   ~ "migrant",
+      "Female"                              ~ "female",
+      "Male"                                ~ "male",
+      "Non-Binary"                          ~ "non_binary",
+      "Students in Foster Care"             ~ "foster_care",
+      c("Military-connected",
+        "Military-Connected")               ~ "military",
+      "Recent Arrivers"                     ~ "recent_arrivers",
+      "Currently/Formerly Incarcerated"     ~ "incarcerated",
+      "Indian Education"                    ~ "indian_ed",
+      "Extended Assessment"                 ~ "extended_assess",
+      .default = student_group
+    ),
+    grade_level = case_match(
+      grade_level,
+      "All Grades" ~ "all",
+      .default = str_remove(grade_level, "^Grade ")
+    ),
+    across(c(n_proficient, pct_proficient,
+             n_level_4, pct_level_4,
+             n_level_3, pct_level_3,
+             n_level_2, pct_level_2,
+             n_level_1, pct_level_1,
+             n_participants, participation_rate),
+           as.numeric),
+    district_id = as.integer(district_id),
+    school_id   = as.integer(school_id)
+  ) %>%
+  select(-source_file, -any_of("academic_year"))
+
+school_tests <- tests_temp
+
 
 # funding ####
