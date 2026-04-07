@@ -268,3 +268,25 @@ ggsave(
   units = 'in',
   dpi = 800
 )
+
+# performance ####
+
+rieke_prof <- analysis %>%
+  filter(str_detect(school_name,'Rieke') & grade == 'all' & student_group == 'all') %>%
+  select(district_id:school_name,
+         school_year,
+         subject,
+         pct_proficient,
+         pct_level_3,
+         pct_level_4)
+
+sw_pps_prof <- analysis %>%
+  filter(school_id %in% sw_pps_elem & grade == 'all' & student_group == 'all') %>%
+  select(district_id:school_name,
+         school_year,
+         subject,
+         pct_proficient,
+         pct_level_3,
+         pct_level_4)
+
+
