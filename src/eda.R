@@ -289,4 +289,196 @@ sw_pps_prof <- analysis %>%
          pct_level_3,
          pct_level_4)
 
+pps_elem_prof <- analysis %>%
+  filter(str_detect(school_name, 'Elementary') &
+           district_name == 'Portland SD 1J' &
+           grade == 'all' & student_group == 'all') %>%
+  select(district_id:school_name,
+         school_year,
+         subject,
+         pct_proficient,
+         pct_level_3,
+         pct_level_4)
+
+
+# proficiency trend ####
+
+pps_elem_avg_trend <- pps_elem_prof %>%
+  filter(!is.na(pct_proficient) & subject %in% c('ela', 'math')) %>%
+  group_by(school_year, subject) %>%
+  summarise(pct_proficient = mean(pct_proficient, na.rm = TRUE), .groups = 'drop') %>%
+  mutate(label = 'PPS Elem Avg', shade = '3')
+
+sw_elem_avg_trend <- sw_pps_prof %>%
+  filter(school_id != 1299 & !is.na(pct_proficient) & subject %in% c('ela', 'math')) %>%
+  group_by(school_year, subject) %>%
+  summarise(pct_proficient = mean(pct_proficient, na.rm = TRUE), .groups = 'drop') %>%
+  mutate(label = 'Other SW Elem', shade = '2')
+
+rieke_trend <- rieke_prof %>%
+  filter(!is.na(pct_proficient) & subject %in% c('ela', 'math')) %>%
+  mutate(label = 'Rieke', shade = '1') %>%
+  select(school_year, subject, pct_proficient, label, shade)
+
+prof_trend_data <- bind_rows(rieke_trend, sw_elem_avg_trend, pps_elem_avg_trend) %>%
+  mutate(subject_label = case_when(
+    subject == 'ela'  ~ 'ELA',
+    subject == 'math' ~ 'Math'
+  ))
+
+prof_trend_plt <- ggplot(prof_trend_data, aes(school_year, pct_proficient, group = interaction(label, subject_label))) +
+  geom_line(aes(color = shade)) +
+  geom_point(aes(color = shade)) +
+  geom_text_repel(
+    data          = \(x) slice_max(x, school_year, n = 1, by = c(label, subject_label)),
+    aes(label     = paste0(label, ': ', round(pct_proficient), '%'), color = shade),
+    hjust         = 0,
+    nudge_x       = 0.2,
+    direction     = 'y',
+    segment.color = NA
+  ) +
+  scale_color_manual(values = c(
+    '1' = '#1B2A4A',
+    '2' = '#B4B2A9',
+    '3' = '#D3D1C7'
+  )) +
+  scale_x_continuous(
+    limits = c(2018.5, 2028.5),
+    breaks = c(2019, 2022, 2023, 2024, 2025),
+    labels = c("'19", "'22", "'23", "'24", "'25")
+  ) +
+  facet_wrap(~subject_label) +
+  labs(
+    x        = '',
+    y        = '',
+    title    = 'SW Portland Elementary School Proficiency',
+    subtitle = 'Percent proficient on Oregon state assessments'
+  ) +
+  theme_ipsum_pub(grid = FALSE) +
+  theme(
+    legend.position = 'none',
+    axis.text.y     = element_blank()
+  )
+
+prof_trend_plt
+
+ggsave(
+  plot   = prof_trend_plt,
+  file   = 'prc/prof-trend-plt.png',
+  width  = 9,
+  height = 5.5,
+  units  = 'in',
+  dpi    = 800
+)
+
+
+# PPS elementary school ranking ####
+
+pps_rank_2025 <- pps_elem_prof %>%
+  filter(school_year == 2025 & subject %in% c('ela', 'math') & !is.na(pct_proficient)) %>%
+  mutate(
+    subject_label = case_when(subject == 'ela' ~ 'ELA', subject == 'math' ~ 'Math'),
+    shade         = case_when(
+      school_id == 1299          ~ '1',
+      school_id %in% sw_pps_elem ~ '2',
+      TRUE                       ~ '3'
+    ),
+    school_short  = gsub(' Elementary School', '', school_name)
+  ) %>%
+  arrange(subject, desc(pct_proficient)) %>%
+  group_by(subject) %>%
+  mutate(rank = row_number()) %>%
+  ungroup()
+
+prof_rank_pps_plt <- ggplot(pps_rank_2025, aes(pct_proficient, rank)) +
+  geom_point(aes(color = shade, size = shade)) +
+  geom_text_repel(
+    data               = \(x) filter(x, shade %in% c('1', '2')),
+    aes(label          = paste0(school_short, ': ', pct_proficient, '%'), color = shade),
+    hjust              = 1,
+    nudge_x            = -5,
+    direction          = 'y',
+    segment.color      = 'gray70',
+    segment.alpha      = 0.5,
+    size               = 2.8,
+    min.segment.length = 0
+  ) +
+  scale_color_manual(values = c('1' = '#1B2A4A', '2' = '#B4B2A9', '3' = '#D3D1C7')) +
+  scale_size_manual(values  = c('1' = 4,          '2' = 3,          '3' = 2)) +
+  scale_y_reverse(breaks = NULL) +
+  scale_x_continuous(limits = c(0, 95)) +
+  facet_wrap(~subject_label) +
+  labs(
+    title    = 'Rieke Among All PPS Elementary Schools',
+    subtitle = '2024-25 proficiency on Oregon state assessments',
+    x        = '% Proficient (Levels 3 & 4)',
+    y        = ''
+  ) +
+  theme_ipsum_pub(grid = FALSE) +
+  theme(
+    legend.position = 'none',
+    axis.text.y     = element_blank()
+  )
+
+prof_rank_pps_plt
+
+ggsave(
+  plot   = prof_rank_pps_plt,
+  file   = 'prc/prof-rank-pps-plt.png',
+  width  = 8,
+  height = 6,
+  units  = 'in',
+  dpi    = 800
+)
+
+
+# SW Portland proficiency comparison ####
+
+sw_ela_order <- sw_pps_prof %>%
+  filter(school_year == 2025 & subject == 'ela' & !is.na(pct_proficient)) %>%
+  arrange(pct_proficient) %>%
+  mutate(school_short = gsub(' Elementary School', '', school_name)) %>%
+  pull(school_short)
+
+sw_prof_2025 <- sw_pps_prof %>%
+  filter(school_year == 2025 & subject %in% c('ela', 'math') & !is.na(pct_proficient)) %>%
+  mutate(
+    subject_label = case_when(subject == 'ela' ~ 'ELA', subject == 'math' ~ 'Math'),
+    shade         = case_when(school_id == 1299 ~ '1', TRUE ~ '2'),
+    school_short  = factor(gsub(' Elementary School', '', school_name), levels = sw_ela_order)
+  )
+
+prof_sw_plt <- ggplot(sw_prof_2025, aes(pct_proficient, school_short)) +
+  geom_col(aes(fill = shade), width = 0.65) +
+  geom_text(
+    aes(x = pct_proficient - 2, label = paste0(round(pct_proficient), '%')),
+    color = 'white',
+    hjust = 1,
+    size  = 3.5
+  ) +
+  scale_fill_manual(values = c('1' = '#1B2A4A', '2' = '#B4B2A9')) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05))) +
+  facet_wrap(~subject_label) +
+  labs(
+    title    = 'SW Portland Elementary School Proficiency',
+    subtitle = '2024-25 percent proficient on Oregon state assessments',
+    x        = '',
+    y        = ''
+  ) +
+  theme_ipsum_pub(grid = FALSE) +
+  theme(
+    legend.position = 'none',
+    axis.text.x     = element_blank()
+  )
+
+prof_sw_plt
+
+ggsave(
+  plot   = prof_sw_plt,
+  file   = 'prc/prof-sw-plt.png',
+  width  = 8,
+  height = 5.5,
+  units  = 'in',
+  dpi    = 800
+)
 
