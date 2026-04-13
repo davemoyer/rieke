@@ -45,7 +45,7 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 2039,Phoenix-Talent SD 4,3247,Armadillo Community Charter School,302 W 1st St,Phoenix,OR,97535,Jackson,"302 W 1st St Phoenix, OR 97535",-122.817883,42.272666
 2206,Hermiston SD 8,1039,Armand Larive Middle,1497 SW 9th St,Hermiston,OR,97838,Umatilla,"1497 SW 9th St Hermiston, OR 97838",-119.3042316,45.82683670000001
 2242,Tigard-Tualatin SD 23J,5819,Art Rutkin Elementary School,15600 SW River Terrace Blvd,Tigard,OR,97224,Washington,"15600 SW River Terrace Blvd Tigard, OR 97224",-122.8442934,45.4063947
-2187,David Douglas SD 40,3580,Arthur Academy (Charter),13717 SE Division St,Portland,OR,97236,Multnomah,"13717 SE Division St Portland, OR 97236",-122.5223719,45.5045969
+2187,David Douglas SD 40,3580,Arthur Academy (Charter),13717 SE Division St,Portland,OR,97236,Multnomah,"13717 SE Division St Portland, OR 97236",-122.5223402,45.5043884
 2243,Beaverton SD 48J,1304,Arts and Communication Magnet Academy,11375 SW Center St,Beaverton,OR,97005,Washington,"11375 SW Center St Beaverton, OR 97005",-122.7940037,45.4945744
 2082,Eugene SD 4J,4554,Arts and Technology Academy at Jefferson,1650 W 22nd Ave,Eugene,OR,97405,Lane,"1650 W 22nd Ave Eugene, OR 97405",-123.1153288,44.0354106
 2191,Central SD 13J,3464,Ash Creek Elem,1360 N 16th St,Monmouth,OR,97361,Polk,"1360 N 16th St Monmouth, OR 97361",-123.2125812,44.86181759999999
@@ -86,7 +86,7 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 1924,North Clackamas SD 12,5451,Beatrice Morrow Cannady Elementary,18031 SE Vogel Rd,Damascus,OR,97089,Clackamas,"18031 SE Vogel Rd Damascus, OR 97089",-122.4776992,45.43076019999999
 2180,Portland SD 1J,831,Beaumont Middle,4043 NE Fremont St,Portland,OR,97212,Multnomah,"4043 NE Fremont St Portland, OR 97212",-122.6217722,45.5489184
 2243,Beaverton SD 48J,1155,Beaver Acres Elem,2125 SW 170th Ave,Beaverton,OR,97003,Washington,"2125 SW 170th Ave Beaverton, OR 97003",-122.8536504,45.504328
-1928,Oregon City SD 62,105,Beavercreek Elem,21944 S Yeoman Rd,Beavercreek,OR,97004,Clackamas,"21944 S Yeoman Rd Beavercreek, OR 97004",-122.5169039,45.2891245
+1928,Oregon City SD 62,105,Beavercreek Elem,21944 S Yeoman Rd,Beavercreek,OR,97004,Clackamas,"21944 S Yeoman Rd Beavercreek, OR 97004",-122.5158735,45.2888121
 2243,Beaverton SD 48J,4638,Beaverton Academy of Science and Engineering,10740 NE Walker Rd,Hillsboro,OR,97006,Washington,"10740 NE Walker Rd Hillsboro, OR 97006",-122.8694149,45.5267495
 2243,Beaverton SD 48J,1187,Beaverton High,13000 SW Second St,Beaverton,OR,97005,Washington,"13000 SW Second St Beaverton, OR 97005",-122.8100076,45.4868214
 2041,Ashland SD 5,375,Bellview Elem,1070 Tolman Creek Rd,Ashland,OR,97520,Jackson,"1070 Tolman Creek Rd Ashland, OR 97520",-122.6706303,42.1758546
@@ -122,7 +122,7 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 2057,Klamath County SD,480,Brixner Jr High,4727 Homedale Rd,Klamath Falls,OR,97603,Klamath,"4727 Homedale Rd Klamath Falls, OR 97603",-121.7209291,42.18336499999999
 2002,Winston-Dillard SD 116,3624,Brockway Elem,2520 NW Brockway Rd,Winston,OR,97496,Douglas,"2520 NW Brockway Rd Winston, OR 97496",-123.4418202,43.1247275
 1974,Brookings-Harbor SD 17C,237,Brookings-Harbor High,625 Pioneer Rd,Brookings,OR,97415,Curry,"625 Pioneer Rd Brookings, OR 97415",-124.2802503,42.0573381
-1894,Baker SD 5J,2,Brooklyn Primary,1350 Washington St,Baker City,OR,97814,Baker,"1350 Washington St Baker City, OR 97814",-117.8343848,44.7748748
+1894,Baker SD 5J,2,Brooklyn Primary,1350 Washington St,Baker City,OR,97814,Baker,"1350 Washington St Baker City, OR 97814",-112.0525706,33.4486814
 2239,Hillsboro SD 1J,1112,Brookwood Elem,3960 SE Cedar St,Hillsboro,OR,97123,Washington,"3960 SE Cedar St Hillsboro, OR 97123",-122.9420655,45.5152621
 1970,Crook County SD,265,Brothers Elem,34396 Hwy 20,Brothers,OR,97712,Deschutes,"34396 Hwy 20 Brothers, OR 97712",-120.6035804,43.8134023
 1979,Brothers SD 15,265,Brothers Elem,34396 Hwy 20,Brothers,OR,97712,Deschutes,"34396 Hwy 20 Brothers, OR 97712",-120.6035804,43.8134023
@@ -150,19 +150,19 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 2142,Salem-Keizer SD 24J,733,Candalaria Elem,935 Hansen Ave S,Salem,OR,97302,Marion,"935 Hansen Ave S Salem, OR 97302",-123.0587933,44.91269459999999
 1928,Oregon City SD 62,106,Candy Lane Elem,5901 SE Hull St,Milwaukie,OR,97267,Clackamas,"5901 SE Hull St Milwaukie, OR 97267",-122.6022846,45.3936491
 1935,Seaside SD 10,5385,Cannon Beach Academy,3781 S Hemlock St,Cannon Beach,OR,97110,Clatsop,"3781 S Hemlock St Cannon Beach, OR 97110",-123.9594833,45.8675608
-1994,South Umpqua SD 19,289,Canyonville School,124 N Main,Canyonville,OR,97417,Douglas,"124 N Main Canyonville, OR 97417",-123.2804569,42.9280015
+1994,South Umpqua SD 19,289,Canyonville School,124 N Main,Canyonville,OR,97417,Douglas,"124 N Main Canyonville, OR 97417",-123.280577,42.9280709
 2180,Portland SD 1J,838,Capitol Hill Elem,8401 SW 17th Ave,Portland,OR,97219,Multnomah,"8401 SW 17th Ave Portland, OR 97219",-122.6959942,45.464172
 1929,Canby SD 86,92,Carus School,14412 S Carus Rd,Oregon City,OR,97045,Clackamas,"14412 S Carus Rd Oregon City, OR 97045",-122.571326,45.27003029999999
 1924,North Clackamas SD 12,4475,Cascade Heights Public Charter School,11326 SE 47th Ave,Milwaukie,OR,97222,Clackamas,"11326 SE 47th Ave Milwaukie, OR 97222",-122.6143227,45.4411029
 1924,North Clackamas SD 12,4475,Cascade Heights Public Charter School,11326 SE 47th Ave,Milwaukie,OR,97222,Clackamas,"11326 SE 47th Ave Milwaukie, OR 97222",-122.6143227,45.4411029
 2139,Cascade SD 5,810,Cascade Jr High,10226 Marion Rd SE,Turner,OR,97392,Marion,"10226 Marion Rd SE Turner, OR 97392",-122.9163267,44.8085808
 2024,Hood River County SD,3372,Cascade Locks School,300 Wa-na-pa St,Cascade Locks,OR,97014,Hood River,"300 Wa-na-pa St Cascade Locks, OR 97014",-121.8922591,45.6671757
-1976,Bend-LaPine Administrative SD 1,242,Cascade Middle,19619 Mountaineer Wy,Bend,OR,97702,Deschutes,"19619 Mountaineer Wy Bend, OR 97702",-121.3401409,44.0370019
+1976,Bend-LaPine Administrative SD 1,242,Cascade Middle,19619 Mountaineer Wy,Bend,OR,97702,Deschutes,"19619 Mountaineer Wy Bend, OR 97702",-121.3415115,44.0366262
 2088,Bethel SD 52,581,Cascade Middle,1525 Echo Hollow Rd,Eugene,OR,97402,Lane,"1525 Echo Hollow Rd Eugene, OR 97402",-123.1665865,44.0788187
 2139,Cascade SD 5,5380,Cascade Opportunity Center,11463 W Stayton Rd SE,Aumsville,OR,97325,Marion,"11463 W Stayton Rd SE Aumsville, OR 97325",-122.8759617,44.788419
 2139,Cascade SD 5,811,Cascade Sr High,10226 Marion Rd SE,Turner,OR,97392,Marion,"10226 Marion Rd SE Turner, OR 97392",-122.9163267,44.8085808
 2249,Mitchell SD 55,5440,Cascade Virtual Academy,603 NW 3rd St,Prineville,OR,97754,Wheeler,"603 NW 3rd St Prineville, OR 97754",-120.8533264,44.303207
-2101,Lebanon Community SD 9,652,Cascades School,2163 7th St,Lebanon,OR,97355,Linn,"2163 7th St Lebanon, OR 97355",-122.9154876,44.5249549
+2101,Lebanon Community SD 9,652,Cascades School,2163 7th St,Lebanon,OR,97355,Linn,"2163 7th St Lebanon, OR 97355",-122.9141826,44.52523739999999
 2254,Newberg SD 29J,5831,Catalyst High School,1421 Deborah Rd,Newberg,OR,97132,Yamhill,"1421 Deborah Rd Newberg, OR 97132",-122.9509612,45.3097403
 2243,Beaverton SD 48J,1158,Cedar Mill Elem,10265 NW Cornell Rd,Portland,OR,97229,Washington,"10265 NW Cornell Rd Portland, OR 97229",-122.7825279,45.5273354
 2243,Beaverton SD 48J,1180,Cedar Park Middle,11100 SW Park Way,Portland,OR,97225,Washington,"11100 SW Park Way Portland, OR 97225",-122.7909774,45.5053578
@@ -213,7 +213,7 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 1924,North Clackamas SD 12,4223,Clackamas Web Academy,8740 SE Sunnybrook Blvd,Clackamas,OR,97015,Clackamas,"8740 SE Sunnybrook Blvd Clackamas, OR 97015",-122.5729379,45.4295907
 2142,Salem-Keizer SD 24J,3373,Claggett Creek Middle,1810 Alder Dr NE,Keizer,OR,97303,Marion,"1810 Alder Dr NE Keizer, OR 97303",-123.0113361,44.9847229
 2204,Umatilla SD 6R,1031,Clara Brownell Middle,1300 7th St,Umatilla,OR,97882,Umatilla,"1300 7th St Umatilla, OR 97882",-119.3380235,45.9169744
-2180,Portland SD 1J,5817,Clark Elementary School,1231 SE 92nd Ave,Portland,OR,97216,Multnomah,"1231 SE 92nd Ave Portland, OR 97216",-122.5698501,45.5135543
+2180,Portland SD 1J,5817,Clark Elementary School,1231 SE 92nd Ave,Portland,OR,97216,Multnomah,"1231 SE 92nd Ave Portland, OR 97216",-122.5705519,45.513526
 1925,Molalla River SD 35,93,Clarkes Elem,19100 S Windy City Rd,Mulino,OR,97042,Clackamas,"19100 S Windy City Rd Mulino, OR 97042",-122.4740165,45.2148782
 1945,Clatskanie SD 6J,163,Clatskanie Elem,815 S Nehalem St,Clatskanie,OR,97016,Columbia,"815 S Nehalem St Clatskanie, OR 97016",-123.2058516,46.0992582
 1945,Clatskanie SD 6J,168,Clatskanie Middle/High,471 SW Bel Air Dr,Clatskanie,OR,97016,Columbia,"471 SW Bel Air Dr Clatskanie, OR 97016",-123.2118718,46.101634
@@ -357,7 +357,7 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 2239,Hillsboro SD 1J,1197,Evergreen Middle School,29850 NW Evergreen Rd,Hillsboro,OR,97124,Washington,"29850 NW Evergreen Rd Hillsboro, OR 97124",-122.9262413,45.5508224
 1966,North Bend SD 13,4690,Evergreen Virtual Academy,400 Virginia Ave Ste 114,North Bend,OR,97459,Coos,"400 Virginia Ave Ste 114 North Bend, OR 97459",-124.2214836,43.40674790000001
 1966,North Bend SD 13,4690,Evergreen Virtual Academy,400 Virginia Ave Ste 114,North Bend,OR,97459,Coos,"400 Virginia Ave Ste 114 North Bend, OR 97459",-124.2214836,43.40674790000001
-2254,Newberg SD 29J,1218,Ewing Young Elem,17600 NE North Valley Rd,Newberg,OR,97132,Yamhill,"17600 NE North Valley Rd Newberg, OR 97132",-123.0574287,45.329761
+2254,Newberg SD 29J,1218,Ewing Young Elem,17600 NE North Valley Rd,Newberg,OR,97132,Yamhill,"17600 NE North Valley Rd Newberg, OR 97132",-123.057782,45.3296108
 2142,Salem-Keizer SD 24J,751,Eyre Elem,4868 Buffalo Dr SE,Salem,OR,97301,Marion,"4868 Buffalo Dr SE Salem, OR 97301",-122.9617545,44.9179515
 2088,Bethel SD 52,584,Fairfield Elem,3455 Royal Ave,Eugene,OR,97402,Lane,"3455 Royal Ave Eugene, OR 97402",-123.1506275,44.07068109999999
 2182,Reynolds SD 7,945,Fairview Elem,225 Main St,Fairview,OR,97024,Multnomah,"225 Main St Fairview, OR 97024",-122.4362264,45.5399022
@@ -446,13 +446,13 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 2212,La Grande SD 1,1068,Greenwood Elem,2300 N Spruce St,La Grande,OR,97850,Union,"2300 N Spruce St La Grande, OR 97850",-118.087106,45.3335447
 2212,La Grande SD 1,1068,Greenwood Elem,2300 N Spruce St,La Grande,OR,97850,Union,"2300 N Spruce St La Grande, OR 97850",-118.087106,45.3335447
 2183,Gresham-Barlow SD 10J,4601,Gresham Arthur Academy,1890 NE Cleveland Ave,Gresham,OR,97030,Multnomah,"1890 NE Cleveland Ave Gresham, OR 97030",-122.4197992,45.5106957
-2183,Gresham-Barlow SD 10J,986,Gresham High,1200 N Main Ave,Gresham,OR,97030,Multnomah,"1200 N Main Ave Gresham, OR 97030",-122.4295897,45.5060582
+2183,Gresham-Barlow SD 10J,986,Gresham High,1200 N Main Ave,Gresham,OR,97030,Multnomah,"1200 N Main Ave Gresham, OR 97030",-122.4304975,45.5048146
 2048,Medford SD 549C,408,Griffin Creek Elem,2430 Griffin Creek Rd,Medford,OR,97501,Jackson,"2430 Griffin Creek Rd Medford, OR 97501",-122.907698,42.2942271
 1970,Crook County SD,5882,Grizzly Mountain HomeLink,641 E 1st St,Prineville,OR,97754,Crook,"641 E 1st St Prineville, OR 97754",-120.8404323,44.3015034
 2239,Hillsboro SD 1J,1152,Groner Elementary School,23405 SW Scholls Ferry Rd,Hillsboro,OR,97123,Washington,"23405 SW Scholls Ferry Rd Hillsboro, OR 97123",-122.9207476,45.4185104
 2180,Portland SD 1J,854,Grout Elem,3119 SE Holgate Blvd,Portland,OR,97202,Multnomah,"3119 SE Holgate Blvd Portland, OR 97202",-122.6332002,45.4910818
 2142,Salem-Keizer SD 24J,745,Gubser Elem,6610 14th Ave NE,Keizer,OR,97303,Marion,"6610 14th Ave NE Keizer, OR 97303",-123.0117476,45.0152521
-2083,Springfield SD 19,548,Guy Lee Elem,755 Harlow Rd,Springfield,OR,97477,Lane,"755 Harlow Rd Springfield, OR 97477",-123.0387512,44.0698569
+2083,Springfield SD 19,548,Guy Lee Elem,755 Harlow Rd,Springfield,OR,97477,Lane,"755 Harlow Rd Springfield, OR 97477",-123.0384336,44.0701559
 1894,Baker SD 5J,4,Haines Elem,400 School St,Baker City,OR,97814,Baker,"400 School St Baker City, OR 97814",-117.9339893,44.9137765
 1894,Baker SD 5J,4,Haines Elem,400 School St,Baker City,OR,97814,Baker,"400 School St Baker City, OR 97814",-117.9339893,44.9137765
 2183,Gresham-Barlow SD 10J,936,Hall Elem,2505 NE 23rd St,Gresham,OR,97030,Multnomah,"2505 NE 23rd St Gresham, OR 97030",-122.4064523,45.5145663
@@ -483,7 +483,7 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 2244,Sherwood SD 88J,1191,Hawks View Elementary,21970 SW Sherwood Blvd,Sherwood,OR,97140,Washington,"21970 SW Sherwood Blvd Sherwood, OR 97140",-122.8413285,45.3588341
 2207,Pendleton SD 16,4116,Hawthorne Alternative High School,1700 NW 15th Dr,Pendleton,OR,97801,Umatilla,"1700 NW 15th Dr Pendleton, OR 97801",-118.8061418,45.6772741
 2102,Sweet Home SD 55,663,Hawthorne Elem,3205 Long St,Sweet Home,OR,97386,Linn,"3205 Long St Sweet Home, OR 97386",-122.7067086,44.39839569999999
-2142,Salem-Keizer SD 24J,755,Hayesville Elem,4545 Ward Dr NE,Salem,OR,97304,Marion,"4545 Ward Dr NE Salem, OR 97304",-122.9718235,44.9833787
+2142,Salem-Keizer SD 24J,755,Hayesville Elem,4545 Ward Dr NE,Salem,OR,97304,Marion,"4545 Ward Dr NE Salem, OR 97304",-122.971001,44.9839999
 2180,Portland SD 1J,855,Hayhurst Elem,5037 SW Iowa St,Portland,OR,97221,Multnomah,"5037 SW Iowa St Portland, OR 97221",-122.7289138,45.4801718
 2242,Tigard-Tualatin SD 23J,1300,Hazelbrook Middle,11300 SW Hazelbrook Rd,Tualatin,OR,97062,Washington,"11300 SW Hazelbrook Rd Tualatin, OR 97062",-122.7924851,45.3927753
 2243,Beaverton SD 48J,1164,Hazeldale Elem,20080 SW Farmington Rd,Aloha,OR,97007,Washington,"20080 SW Farmington Rd Aloha, OR 97007",-122.883243,45.4690934
@@ -533,7 +533,7 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 2082,Eugene SD 4J,515,Howard Elem,700 Howard Ave,Eugene,OR,97404,Lane,"700 Howard Ave Eugene, OR 97404",-123.1387654,44.0868043
 2142,Salem-Keizer SD 24J,1358,Howard Street Charter,625 Marion St NE,Salem,OR,97301,Marion,"625 Marion St NE Salem, OR 97301",-123.0325837,44.9441592
 1991,Douglas County SD 4,273,Hucrest Elem,1810 NW Kline St,Roseburg,OR,97470,Douglas,"1810 NW Kline St Roseburg, OR 97470",-123.3814343,43.2311767
-1946,Rainier SD 13,171,Hudson Park Elem,28176 Old Rainier Rd,Rainier,OR,97048,Columbia,"28176 Old Rainier Rd Rainier, OR 97048",-122.98907320000001,46.0912836
+1946,Rainier SD 13,171,Hudson Park Elem,28176 Old Rainier Rd,Rainier,OR,97048,Columbia,"28176 Old Rainier Rd Rainier, OR 97048",-122.9896213,46.0919749
 1977,Redmond SD 2J,5500,Hugh Hartman Elementary,2105 W Antler Ave,Redmond,OR,97756,Deschutes,"2105 W Antler Ave Redmond, OR 97756",-121.1917507,44.27733
 2008,John Day SD 3,327,Humbolt Elem,329 N Humbolt St,Canyon City,OR,97820,Grant,"329 N Humbolt St Canyon City, OR 97820",-118.9491089,44.3992139
 1895,Huntington SD 16J,3351,Huntington School,520 3rd St E,Huntington,OR,97907,Baker,"520 3rd St E Huntington, OR 97907",-117.260925,44.346827
@@ -572,7 +572,7 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 2082,Eugene SD 4J,524,James Monroe Middle,2800 Bailey Ln,Eugene,OR,97401,Lane,"2800 Bailey Ln Eugene, OR 97401",-123.0658401,44.0756012
 2242,Tigard-Tualatin SD 23J,1139,James Templeton Elem,9500 SW Murdock St,Tigard,OR,97224,Washington,"9500 SW Murdock St Tigard, OR 97224",-122.7744706,45.4130941
 2142,Salem-Keizer SD 24J,4210,Jane Goodall Environmental Middle Charter,999B Locust St NE,Salem,OR,97301,Marion,"999B Locust St NE Salem, OR 97301",-123.0223193,44.9665373
-2247,Spray SD 1,5910,Jefferson Classical Academy of Oregon,740 S Overholt St,Prairie City,OR,97869,Grant,"740 S Overholt St Prairie City, OR 97869",-118.7099477,44.46321349999999
+2247,Spray SD 1,5910,Jefferson Classical Academy of Oregon,740 S Overholt St,Prairie City,OR,97869,Grant,"740 S Overholt St Prairie City, OR 97869",-118.7091488,44.4561588
 2053,Jefferson County SD 509J,1773,Jefferson County Middle,1180 SE Kemper Way,Madras,OR,97741,Jefferson,"1180 SE Kemper Way Madras, OR 97741",-121.1057174,44.6342535
 2048,Medford SD 549C,413,Jefferson Elem,333 Holmes Ave,Medford,OR,97501,Jackson,"333 Holmes Ave Medford, OR 97501",-122.8693037,42.30867019999999
 2140,Jefferson SD 14J,721,Jefferson Elem,615 N 2nd St,Jefferson,OR,97352,Marion,"615 N 2nd St Jefferson, OR 97352",-123.00938,44.7228479
@@ -584,7 +584,7 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 2042,Central Point SD 6,383,Jewett Elem,1001 Manzanita St,Central Point,OR,97502,Jackson,"1001 Manzanita St Central Point, OR 97502",-122.9091359,42.379776
 2254,Newberg SD 29J,4342,Joan Austin Elem,2200 N Center St,Newberg,OR,97132,Yamhill,"2200 N Center St Newberg, OR 97132",-122.968233,45.3168446
 1991,Douglas County SD 4,278,John C Fremont Middle,850 W Keady Ct,Roseburg,OR,97470,Douglas,"850 W Keady Ct Roseburg, OR 97470",-123.371418,43.21018530000001
-2145,Mt Angel SD 91,794,John F Kennedy High,890 E Marquam St,Mt Angel,OR,97362,Marion,"890 E Marquam St Mt Angel, OR 97362",-122.7904399,45.072828
+2145,Mt Angel SD 91,794,John F Kennedy High,890 E Marquam St,Mt Angel,OR,97362,Marion,"890 E Marquam St Mt Angel, OR 97362",-122.7903906,45.0727698
 2082,Eugene SD 4J,519,John F Kennedy Middle,2200 Bailey Hill Rd,Eugene,OR,97405,Lane,"2200 Bailey Hill Rd Eugene, OR 97405",-123.1547674,44.0359899
 1928,Oregon City SD 62,114,John McLoughlin Elem,19230 S End Rd,Oregon City,OR,97045,Clackamas,"19230 S End Rd Oregon City, OR 97045",-122.6290923,45.3279197
 1977,Redmond SD 2J,258,John Tuck Elem,209 NW 10th St,Redmond,OR,97756,Deschutes,"209 NW 10th St Redmond, OR 97756",-121.180044,44.27810909999999
@@ -602,7 +602,7 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 2180,Portland SD 1J,5218,Kairos PDX,3635 N Williams,Portland,OR,97227,Multnomah,"3635 N Williams Portland, OR 97227",-122.6675332,45.5493111
 2142,Salem-Keizer SD 24J,4858,Kalapuya Elem,2085 Wilmington Ave NW,Salem,OR,97304,Polk,"2085 Wilmington Ave NW Salem, OR 97304",-123.0747501,44.9647865
 2088,Bethel SD 52,3566,Kalapuya High,1200 N Terry St,Eugene,OR,97402,Lane,"1200 N Terry St Eugene, OR 97402",-123.1892109,44.0738816
-2055,Three Rivers/Josephine County SD,5821,Kalmiopsis Community Arts High,139 S Caves Ave,Cave Junction,OR,97523,Josephine,"139 S Caves Ave Cave Junction, OR 97523",-123.6446267,42.1660586
+2055,Three Rivers/Josephine County SD,5821,Kalmiopsis Community Arts High,139 S Caves Ave,Cave Junction,OR,97523,Josephine,"139 S Caves Ave Cave Junction, OR 97523",-123.644658,42.1660508
 1974,Brookings-Harbor SD 17C,236,Kalmiopsis Elem,650 Easy St,Brookings,OR,97415,Curry,"650 Easy St Brookings, OR 97415",-124.2826769,42.059369
 1901,Corvallis SD 509J,35,Kathryn Jones Harrison Elementary,1825 NW 27th St,Corvallis,OR,97330,Benton,"1825 NW 27th St Corvallis, OR 97330",-123.2802159,44.5857793
 1894,Baker SD 5J,5,Keating Elem,41964 Miles Bridge Rd,Baker City,OR,97814,Baker,"41964 Miles Bridge Rd Baker City, OR 97814",-117.5909094,44.8743712
@@ -765,7 +765,7 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 2242,Tigard-Tualatin SD 23J,3579,MITCH Charter School,19550 SW 90th Court,Tualatin,OR,97062,Washington,"19550 SW 90th Court Tualatin, OR 97062",-122.7703915,45.37856110000001
 2249,Mitchell SD 55,3404,Mitchell School,340 SE High St,Mitchell,OR,97750,Wheeler,"340 SE High St Mitchell, OR 97750",-120.147075,44.564692
 2094,Marcola SD 79J,604,Mohawk High,38300 Wendling Rd,Marcola,OR,97454,Lane,"38300 Wendling Rd Marcola, OR 97454",-122.8539015,44.1709349
-1925,Molalla River SD 35,94,Molalla Elem,910 Toliver Rd,Molalla,OR,97038,Clackamas,"910 Toliver Rd Molalla, OR 97038",-122.5940867,45.1535135
+1925,Molalla River SD 35,94,Molalla Elem,910 Toliver Rd,Molalla,OR,97038,Clackamas,"910 Toliver Rd Molalla, OR 97038",-122.5945501,45.1536123
 1925,Molalla River SD 35,142,Molalla High,357 Francis St,Molalla,OR,97038,Clackamas,"357 Francis St Molalla, OR 97038",-122.5690126,45.1542764
 1925,Molalla River SD 35,4745,Molalla River Academy,16897 S Callahan Rd,Molalla,OR,97038,Clackamas,"16897 S Callahan Rd Molalla, OR 97038",-122.5214608,45.1207556
 1925,Molalla River SD 35,95,Molalla River Middle,318 Leroy,Molalla,OR,97038,Clackamas,"318 Leroy Molalla, OR 97038",-122.5912834,45.1523751
@@ -866,7 +866,7 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 1990,Oakland SD 1,268,Oakland High,521 NE Spruce St,Oakland,OR,97462,Douglas,"521 NE Spruce St Oakland, OR 97462",-123.2994704,43.4278608
 1990,Oakland SD 1,266,Oakland Middle School,931 Old Town Lp,Oakland,OR,97462,Douglas,"931 Old Town Lp Oakland, OR 97462",-123.2989163,43.429931
 2091,Junction City SD 69,596,Oaklea Middle,1515 Rose St,Junction City,OR,97448,Lane,"1515 Rose St Junction City, OR 97448",-123.2159919,44.22650420000001
-2093,Oakridge SD 76,600,Oakridge Elem,48119 E 1st St,Oakridge,OR,97463,Lane,"48119 E 1st St Oakridge, OR 97463",-122.4656713,43.7486676
+2093,Oakridge SD 76,600,Oakridge Elem,48119 E 1st St,Oakridge,OR,97463,Lane,"48119 E 1st St Oakridge, OR 97463",-122.4651236,43.7483921
 2093,Oakridge SD 76,602,Oakridge High,47997 W 1st St,Oakridge,OR,97463,Lane,"47997 W 1st St Oakridge, OR 97463",-122.4691009,43.7486618
 2093,Oakridge SD 76,601,Oakridge Jr High,47997 W 1st St,Oakridge,OR,97463,Lane,"47997 W 1st St Oakridge, OR 97463",-122.4691009,43.7486618
 1977,Redmond SD 2J,262,Obsidian Middle,1335 SW Obsidian Ave,Redmond,OR,97756,Deschutes,"1335 SW Obsidian Ave Redmond, OR 97756",-121.1824518,44.2635411
@@ -880,7 +880,7 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 2108,Ontario SD 8C,699,Ontario High,1115 W Idaho Ave,Ontario,OR,97914,Malheur,"1115 W Idaho Ave Ontario, OR 97914",-116.9775215,44.0293269
 2108,Ontario SD 8C,698,Ontario Middle,573 SW 2nd Ave,Ontario,OR,97914,Malheur,"573 SW 2nd Ave Ontario, OR 97914",-116.9700367,44.02631419999999
 2142,Salem-Keizer SD 24J,3528,Optimum Learning Environment Charter,7905 June Reid Pl NE,Keizer,OR,97303,Marion,"7905 June Reid Pl NE Keizer, OR 97303",-123.0197493,45.033353
-2039,Phoenix-Talent SD 4,370,Orchard Hill Elem,1011 LaLoma Dr,Medford,OR,97504,Jackson,"1011 LaLoma Dr Medford, OR 97504",-122.8301246,42.3083607
+2039,Phoenix-Talent SD 4,370,Orchard Hill Elem,1011 LaLoma Dr,Medford,OR,97504,Jackson,"1011 LaLoma Dr Medford, OR 97504",-122.8302192,42.3084691
 2103,Scio SD 95,4399,Oregon Charter Academy,833 NW Santiam Blvd,Mill City,OR,97360,Marion,"833 NW Santiam Blvd Mill City, OR 97360",-122.4871195,44.7575509
 2103,Scio SD 95,4399,Oregon Charter Academy,833 NW Santiam Blvd,Mill City,OR,97360,Marion,"833 NW Santiam Blvd Mill City, OR 97360",-122.4871195,44.7575509
 2104,Santiam Canyon SD 129J,4399,Oregon Charter Academy,833 NW Santiam Blvd,Mill City,OR,97360,Marion,"833 NW Santiam Blvd Mill City, OR 97360",-122.4871195,44.7575509
@@ -919,7 +919,7 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 2192,Perrydale SD 21,3378,Perrydale School,7445 Perrydale Rd,Amity,OR,97101,Polk,"7445 Perrydale Rd Amity, OR 97101",-123.2575823,45.0416317
 2057,Klamath County SD,477,Peterson Elem,4856 Clinton Ave,Klamath Falls,OR,97603,Klamath,"4856 Clinton Ave Klamath Falls, OR 97603",-121.7289222,42.189877
 1900,Philomath SD 17J,5492,Philomath Academy,2054 Applegate St,Philomath,OR,97370,Benton,"2054 Applegate St Philomath, OR 97370",-123.3558577,44.5380078
-1900,Philomath SD 17J,20,Philomath Elem,239 S 16th St,Philomath,OR,97370,Benton,"239 S 16th St Philomath, OR 97370",-123.3628007,44.5378894
+1900,Philomath SD 17J,20,Philomath Elem,239 S 16th St,Philomath,OR,97370,Benton,"239 S 16th St Philomath, OR 97370",-123.3626384,44.53745869999999
 1900,Philomath SD 17J,22,Philomath High,2054 Applegate St,Philomath,OR,97370,Benton,"2054 Applegate St Philomath, OR 97370",-123.3558577,44.5380078
 1900,Philomath SD 17J,21,Philomath Middle,2021 Chapel Dr,Philomath,OR,97370,Benton,"2021 Chapel Dr Philomath, OR 97370",-123.3560503,44.53495789999999
 2039,Phoenix-Talent SD 4,371,Phoenix Elem,215 N Rose St,Phoenix,OR,97535,Jackson,"215 N Rose St Phoenix, OR 97535",-122.8201751,42.2732696
@@ -947,7 +947,7 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 2180,Portland SD 1J,4534,Portland Village School,4650 S Macadam Ave,Portland,OR,97239,Multnomah,"4650 S Macadam Ave Portland, OR 97239",-122.6729481,45.48937979999999
 2180,Portland SD 1J,4534,Portland Village School,4650 S Macadam Ave,Portland,OR,97239,Multnomah,"4650 S Macadam Ave Portland, OR 97239",-122.6729481,45.48937979999999
 1970,Crook County SD,223,Powell Butte Community Charter,13650 SW Hwy 126,Powell Butte,OR,97753,Crook,"13650 SW Hwy 126 Powell Butte, OR 97753",-121.0172747,44.2471311
-2185,Centennial SD 28J,965,Powell Butte Elementary,3615 SE 174th St,Portland,OR,97236,Multnomah,"3615 SE 174th St Portland, OR 97236",-122.48577,45.49641219999999
+2185,Centennial SD 28J,965,Powell Butte Elementary,3615 SE 174th St,Portland,OR,97236,Multnomah,"3615 SE 174th St Portland, OR 97236",-122.4855183,45.4974689
 2183,Gresham-Barlow SD 10J,939,Powell Valley Elem,4825 SE Powell Valley Rd,Gresham,OR,97080,Multnomah,"4825 SE Powell Valley Rd Gresham, OR 97080",-122.3838475,45.4926945
 1967,Powers SD 31,210,Powers Elem,Poplar St,Powers,OR,97466,Coos,"Poplar St Powers, OR 97466",-124.070309,42.8804527
 1967,Powers SD 31,211,Powers High,High School Hill Rd,Powers,OR,97466,Coos,"High School Hill Rd Powers, OR 97466",-124.0674247,42.8807219
@@ -979,7 +979,7 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 2182,Reynolds SD 7,1343,Reynolds Learning Academy,20234 NE Halsey Street,Fairview,OR,97024,Multnomah,"20234 NE Halsey Street Fairview, OR 97024",-122.455647,45.5329021
 2182,Reynolds SD 7,1254,Reynolds Middle,1200 NE 201st Ave,Fairview,OR,97024,Multnomah,"1200 NE 201st Ave Fairview, OR 97024",-122.455467,45.53117839999999
 2042,Central Point SD 6,385,Richardson Elem,200 W Pine St,Central Point,OR,97502,Jackson,"200 W Pine St Central Point, OR 97502",-122.9212112,42.3730125
-2180,Portland SD 1J,883,Richmond,2276 SE 41st Ave,Portland,OR,97214,Multnomah,"2276 SE 41st Ave Portland, OR 97214",-122.6198598,45.5064327
+2180,Portland SD 1J,883,Richmond,2276 SE 41st Ave,Portland,OR,97214,Multnomah,"2276 SE 41st Ave Portland, OR 97214",-122.6197162,45.5063519
 2142,Salem-Keizer SD 24J,757,Richmond Elem,466 Richmond Ave SE,Salem,OR,97301,Marion,"466 Richmond Ave SE Salem, OR 97301",-123.0127274,44.9294618
 1999,Riddle SD 70,304,Riddle Elem,Fifth & Park Sts,Riddle,OR,97469,Douglas,"Fifth & Park Sts Riddle, OR 97469",-123.3620615905213,42.954195199399734
 1999,Riddle SD 70,305,Riddle High,127 Main St,Riddle,OR,97469,Douglas,"127 Main St Riddle, OR 97469",-123.3647552,42.9496074
@@ -994,7 +994,7 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 1972,Central Curry SD 1,231,Riley Creek Elem,94350 6th St,Gold Beach,OR,97444,Curry,"94350 6th St Gold Beach, OR 97444",-124.4138485,42.4095741
 1923,Lake Oswego SD 7J,56,River Grove Elem,5850 SW McEwan Rd,Lake Oswego,OR,97035,Clackamas,"5850 SW McEwan Rd Lake Oswego, OR 97035",-122.7364757,45.3890871
 1930,Estacada SD 108,132,River Mill Elem,850 N Broadway St,Estacada,OR,97023,Clackamas,"850 N Broadway St Estacada, OR 97023",-122.3346196,45.2973027
-2082,Eugene SD 4J,525,River Road Elem,120 W Hilliard Ln,Eugene,OR,97404,Lane,"120 W Hilliard Ln Eugene, OR 97404",-123.1235404,44.0785711
+2082,Eugene SD 4J,525,River Road Elem,120 W Hilliard Ln,Eugene,OR,97404,Lane,"120 W Hilliard Ln Eugene, OR 97404",-123.1245225,44.0783509
 2083,Springfield SD 19,1352,Riverbend Elem,320 N 51st St,Springfield,OR,97478,Lane,"320 N 51st St Springfield, OR 97478",-122.9439446,44.0485512
 2436,ODE/Youth Corrections Education,2386,RiverBend High,58231 Oregon Hwy 244,La Grande,OR,97850,Union,"58231 Oregon Hwy 244 La Grande, OR 97850",-118.4053532,45.2534118
 3477,ODE YCEP District,2386,RiverBend High,58231 Oregon Hwy 244,La Grande,OR,97850,Union,"58231 Oregon Hwy 244 La Grande, OR 97850",-118.4053532,45.2534118
@@ -1036,14 +1036,14 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 1976,Bend-LaPine Administrative SD 1,4793,Rosland Elem,52350 Rease Dr,LaPine,OR,97739,Deschutes,"52350 Rease Dr LaPine, OR 97739",-121.5037711,43.6703014
 1924,North Clackamas SD 12,84,Rowe Middle,3606 SE Lake Rd,Milwaukie,OR,97222,Clackamas,"3606 SE Lake Rd Milwaukie, OR 97222",-122.6264993,45.432946
 2048,Medford SD 549C,418,Ruch Outdoor Community School,156 Upper Applegate Rd,Jacksonville,OR,97530,Jackson,"156 Upper Applegate Rd Jacksonville, OR 97530",-123.0439593,42.2357342
-1925,Molalla River SD 35,128,Rural Dell Elem,10500 S Hwy 211,Molalla,OR,97038,Clackamas,"10500 S Hwy 211 Molalla, OR 97038",-122.6511239,45.1487106
+1925,Molalla River SD 35,128,Rural Dell Elem,10500 S Hwy 211,Molalla,OR,97038,Clackamas,"10500 S Hwy 211 Molalla, OR 97038",-122.6518247,45.1483216
 2181,Parkrose SD 3,926,Russell Elem,2700 NE 127th Ave,Portland,OR,97230,Multnomah,"2700 NE 127th Ave Portland, OR 97230",-122.5313131,45.54143819999999
 2180,Portland SD 1J,886,Sabin Elem,4013 NE 18th Ave,Portland,OR,97212,Multnomah,"4013 NE 18th Ave Portland, OR 97212",-122.6478469,45.5522028
 2181,Parkrose SD 3,927,Sacramento Elem,11400 NE Sacramento St,Portland,OR,97220,Multnomah,"11400 NE Sacramento St Portland, OR 97220",-122.5453966,45.538717
 1977,Redmond SD 2J,256,Sage Elem,2790 SW Wickiup,Redmond,OR,97756,Deschutes,"2790 SW Wickiup Redmond, OR 97756",-121.2020949,44.2462113
 2142,Salem-Keizer SD 24J,759,Salem Heights Elem,3495 Liberty Rd S,Salem,OR,97302,Marion,"3495 Liberty Rd S Salem, OR 97302",-123.0506774,44.9053117
 2182,Reynolds SD 7,3989,Salish Ponds Elem,1210 NE 201st Ave,Fairview,OR,97024,Multnomah,"1210 NE 201st Ave Fairview, OR 97024",-122.4526177,45.529685
-2183,Gresham-Barlow SD 10J,987,Sam Barlow High,5105 SE 302nd Ave,Gresham,OR,97080,Multnomah,"5105 SE 302nd Ave Gresham, OR 97080",-122.3538477,45.485481299999996
+2183,Gresham-Barlow SD 10J,987,Sam Barlow High,5105 SE 302nd Ave,Gresham,OR,97080,Multnomah,"5105 SE 302nd Ave Gresham, OR 97080",-122.3538933,45.48544390000001
 2147,Morrow SD 1,814,Sam Boardman Elem,301 SW Wilson Ln,Boardman,OR,97818,Morrow,"301 SW Wilson Ln Boardman, OR 97818",-119.7070269,45.8269548
 2097,Lincoln County SD,625,Sam Case Elem,459 NE 12th St,Newport,OR,97365,Lincoln,"459 NE 12th St Newport, OR 97365",-124.0468938,44.6458912
 2042,Central Point SD 6,386,Sams Valley Elem,14235 Table Rock Rd,Central Point,OR,97502,Jackson,"14235 Table Rock Rd Central Point, OR 97502",-122.936686,42.4936955
@@ -1077,7 +1077,7 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 2043,Eagle Point SD 9,393,Shady Cove School,37 Schoolhouse Ln,Shady Cove,OR,97539,Jackson,"37 Schoolhouse Ln Shady Cove, OR 97539",-122.8099639,42.622445
 2057,Klamath County SD,478,Shasta Elem,1951 Madison St,Klamath Falls,OR,97603,Klamath,"1951 Madison St Klamath Falls, OR 97603",-121.7167687,42.211613
 2088,Bethel SD 52,587,Shasta Middle,4656 Barger Ave,Eugene,OR,97402,Lane,"4656 Barger Ave Eugene, OR 97402",-123.1770441,44.0836097
-2181,Parkrose SD 3,928,Shaver Elem,3701 NE 131st Pl,Portland,OR,97230,Multnomah,"3701 NE 131st Pl Portland, OR 97230",-122.5289189,45.5489886
+2181,Parkrose SD 3,928,Shaver Elem,3701 NE 131st Pl,Portland,OR,97230,Multnomah,"3701 NE 131st Pl Portland, OR 97230",-122.528598,45.549934
 2257,Sheridan SD 48J,4833,Sheridan AllPrep Academy,339 NW Sherman St,Sheridan,OR,97378,Yamhill,"339 NW Sherman St Sheridan, OR 97378",-123.3986581,45.1012028
 2257,Sheridan SD 48J,1237,Sheridan High,433 S Bridge St,Sheridan,OR,97378,Yamhill,"433 S Bridge St Sheridan, OR 97378",-123.3928482,45.0950418
 2195,Sherman County SD,1010,Sherman County School,65912 High School Lp,Moro,OR,97039,Sherman,"65912 High School Lp Moro, OR 97039",-120.7420973,45.4740767
@@ -1113,11 +1113,11 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 2054,Grants Pass SD 7,441,South Middle,350 W Harbeck Rd,Grants Pass,OR,97527,Josephine,"350 W Harbeck Rd Grants Pass, OR 97527",-123.3338202,42.4151584
 2197,Tillamook SD 9,1014,South Prairie Elem,6855 S Prairie Rd,Tillamook,OR,97141,Tillamook,"6855 S Prairie Rd Tillamook, OR 97141",-123.8172975,45.407483
 2142,Salem-Keizer SD 24J,775,South Salem High,1910 Church St SE,Salem,OR,97302,Marion,"1910 Church St SE Salem, OR 97302",-123.0373252,44.9226057
-2100,Greater Albany Public SD 8J,645,South Shore Elem,910 Bain St SE,Albany,OR,97322,Linn,"910 Bain St SE Albany, OR 97322",-123.0699831,44.63365719999999
+2100,Greater Albany Public SD 8J,645,South Shore Elem,910 Bain St SE,Albany,OR,97322,Linn,"910 Bain St SE Albany, OR 97322",-123.069666,44.63401220000001
 1994,South Umpqua SD 19,293,South Umpqua High,501 NW Chadwick Ln,Myrtle Creek,OR,97457,Douglas,"501 NW Chadwick Ln Myrtle Creek, OR 97457",-123.3277365,42.9874537
 2044,Rogue River SD 35,5443,South Valley Academy,211 Pine St Ste D,Rogue River,OR,97537,Jackson,"211 Pine St Ste D Rogue River, OR 97537",-123.1704152,42.4354492
 2225,South Wasco County SD 1,1108,South Wasco County Elementary,308 Deschutes Ave,Maupin,OR,97037,Wasco,"308 Deschutes Ave Maupin, OR 97037",-121.0793212,45.1762226
-2225,South Wasco County SD 1,1109,South Wasco County Middle/High,699 4th St,Maupin,OR,97037,Wasco,"699 4th St Maupin, OR 97037",-121.0814139,45.17743040000001
+2225,South Wasco County SD 1,1109,South Wasco County Middle/High,699 4th St,Maupin,OR,97037,Wasco,"699 4th St Maupin, OR 97037",-121.0805771,45.1778251
 2055,Three Rivers/Josephine County SD,5505,Southern Oregon Success Academy,345 Merlin Rd,Merlin,OR,97532,Josephine,"345 Merlin Rd Merlin, OR 97532",-123.4193923,42.5149301
 2243,Beaverton SD 48J,2783,Southridge High,9625 SW 125th Ave,Beaverton,OR,97008,Washington,"9625 SW 125th Ave Beaverton, OR 97008",-122.8075512,45.450316
 2082,Eugene SD 4J,528,Spencer Butte Middle,500 E 43rd Ave,Eugene,OR,97405,Lane,"500 E 43rd Ave Eugene, OR 97405",-123.0849672,44.0075475
@@ -1125,14 +1125,14 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 2247,Spray SD 1,3403,Spray School,303 Park Ave,Spray,OR,97874,Wheeler,"303 Park Ave Spray, OR 97874",-119.7926658,44.8344837
 2082,Eugene SD 4J,529,Spring Creek Elem,560 Irvington Dr,Eugene,OR,97404,Lane,"560 Irvington Dr Eugene, OR 97404",-123.1444684,44.11416680000001
 1924,North Clackamas SD 12,3198,Spring Mountain Elem,11645 SE Masa Ln,Happy Valley,OR,97086,Clackamas,"11645 SE Masa Ln Happy Valley, OR 97086",-122.534839,45.437136
-2083,Springfield SD 19,560,Springfield High,875 7th St,Springfield,OR,97477,Lane,"875 7th St Springfield, OR 97477",-123.0158084,44.0535256
+2083,Springfield SD 19,560,Springfield High,875 7th St,Springfield,OR,97477,Lane,"875 7th St Springfield, OR 97477",-123.0157677,44.053334
 2243,Beaverton SD 48J,4712,Springville Elementary,6655 NW Joss Ave,Portland,OR,97229,Washington,"6655 NW Joss Ave Portland, OR 97229",-122.8519274,45.5685623
 1928,Oregon City SD 62,4480,Springwater Environmental Sciences,16491 S Springwater Rd,Oregon City,OR,97045,Clackamas,"16491 S Springwater Rd Oregon City, OR 97045",-122.466483,45.36638790000001
 2183,Gresham-Barlow SD 10J,3577,Springwater Trail High,1440 SE Fleming Ave,Gresham,OR,97080,Multnomah,"1440 SE Fleming Ave Gresham, OR 97080",-122.4065805,45.4860686
 1948,St Helens SD 502,4602,St Helens Arthur Academy,33035 Pittsburg Rd,St Helens,OR,97051,Columbia,"33035 Pittsburg Rd St Helens, OR 97051",-122.8867965,45.8668381
 1948,St Helens SD 502,185,St Helens High,2375 Gable Rd,St Helens,OR,97051,Columbia,"2375 Gable Rd St Helens, OR 97051",-122.8348813,45.8492055
 1948,St Helens SD 502,184,St Helens Middle,354 N 15th St,St Helens,OR,97051,Columbia,"354 N 15th St St Helens, OR 97051",-122.8134978,45.8636494
-2145,Mt Angel SD 91,793,St Marys Public School,590 E College,Mt Angel,OR,97362,Marion,"590 E College Mt Angel, OR 97362",-122.7936699,45.0682511
+2145,Mt Angel SD 91,793,St Marys Public School,590 E College,Mt Angel,OR,97362,Marion,"590 E College Mt Angel, OR 97362",-122.7939353,45.0681181
 2144,St Paul SD 45,778,St Paul Elem,20449 Main St NE,St Paul,OR,97137,Marion,"20449 Main St NE St Paul, OR 97137",-122.9767574,45.2147352
 2144,St Paul SD 45,779,St Paul High,20449 Main St NE,St Paul,OR,97137,Marion,"20449 Main St NE St Paul, OR 97137",-122.9767574,45.2147352
 1948,St Helens SD 502,5686,St. Helens Virtual Academy,470 N 16th St,St Helens,OR,97051,Columbia,"470 N 16th St St Helens, OR 97051",-122.8149298,45.865584
@@ -1158,7 +1158,7 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 2142,Salem-Keizer SD 24J,761,Sumpter Elem,525 Rockwood St SE,Salem,OR,97306,Marion,"525 Rockwood St SE Salem, OR 97306",-123.0482411,44.8777613
 2055,Three Rivers/Josephine County SD,4823,Sunny Wolf Charter School,100 Ruth Ave,Wolf Creek,OR,97497,Josephine,"100 Ruth Ave Wolf Creek, OR 97497",-123.398026,42.6955069
 1924,North Clackamas SD 12,78,Sunnyside Elem,13401 SE 132nd Ave,Clackamas,OR,97015,Clackamas,"13401 SE 132nd Ave Clackamas, OR 97015",-122.5286794,45.425643
-2180,Portland SD 1J,893,Sunnyside Environmental School,3421 SE Salmon St,Portland,OR,97214,Multnomah,"3421 SE Salmon St Portland, OR 97214",-122.6288856,45.5147043
+2180,Portland SD 1J,893,Sunnyside Environmental School,3421 SE Salmon St,Portland,OR,97214,Multnomah,"3421 SE Salmon St Portland, OR 97214",-122.629278,45.5150973
 1991,Douglas County SD 4,276,Sunnyslope Elem,2230 SW Cannon Rd,Roseburg,OR,97471,Douglas,"2230 SW Cannon Rd Roseburg, OR 97471",-123.3888442,43.1549919
 2207,Pendleton SD 16,1051,Sunridge Middle,700 SW Runnion Ave,Pendleton,OR,97801,Umatilla,"700 SW Runnion Ave Pendleton, OR 97801",-118.7879065,45.6515291
 2100,Greater Albany Public SD 8J,644,Sunrise Elem,730 19th Ave SE,Albany,OR,97322,Linn,"730 19th Ave SE Albany, OR 97322",-123.0667678,44.6243772
@@ -1265,7 +1265,7 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 2138,Silver Falls SD 4J,777,Victor Point Elem,1175 Victor Point Rd SE,Silverton,OR,97381,Marion,"1175 Victor Point Rd SE Silverton, OR 97381",-122.7562359,44.9156349
 1924,North Clackamas SD 12,79,View Acres Elem,4828 SE View Acres Rd,Milwaukie,OR,97267,Clackamas,"4828 SE View Acres Rd Milwaukie, OR 97267",-122.6131945,45.41744449999999
 2082,Eugene SD 4J,3229,Village School,3411 Willamette St,Eugene,OR,97405,Lane,"3411 Willamette St Eugene, OR 97405",-123.0909821,44.0187824
-2009,Prairie City SD 4,5809,Virtual Preparatory Academy of Oregon,740 S Overholt St,Prairie City,OR,97869,Grant,"740 S Overholt St Prairie City, OR 97869",-118.7099477,44.46321349999999
+2009,Prairie City SD 4,5809,Virtual Preparatory Academy of Oregon,740 S Overholt St,Prairie City,OR,97869,Grant,"740 S Overholt St Prairie City, OR 97869",-118.7091488,44.4561588
 2243,Beaverton SD 48J,1177,Vose Elem,11350 SW Denney Rd,Beaverton,OR,97008,Washington,"11350 SW Denney Rd Beaverton, OR 97008",-122.7937656,45.4684263
 2239,Hillsboro SD 1J,1119,W L Henry Elem,1060 SE 24th Ave,Hillsboro,OR,97123,Washington,"1060 SE 24th Ave Hillsboro, OR 97123",-122.9565283,45.5120386
 2239,Hillsboro SD 1J,1114,W Verne McKinney Elem,535 NW Darnielle St,Hillsboro,OR,97124,Washington,"535 NW Darnielle St Hillsboro, OR 97124",-122.9954027,45.5305688
@@ -1279,7 +1279,7 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 2220,Wallowa SD 12,1089,Wallowa High,315 First St,Wallowa,OR,97885,Wallowa,"315 First St Wallowa, OR 97885",-117.5327748,45.5709123
 2220,Wallowa SD 12,5728,Wallowa Middle School,315 W 1st St.,Wallowa,OR,97885,Wallowa,"315 W 1st St. Wallowa, OR 97885",-117.5327748,45.5709123
 2182,Reynolds SD 7,2263,Walt Morey Middle,2801 SW Lucas Avenue,Troutdale,OR,97060,Multnomah,"2801 SW Lucas Avenue Troutdale, OR 97060",-122.4071557,45.5223877
-1931,Gladstone SD 115,137,Walter L Kraxberger Middle,17777 Webster Rd,Gladstone,OR,97027,Clackamas,"17777 Webster Rd Gladstone, OR 97027",-122.5864298,45.3947758
+1931,Gladstone SD 115,137,Walter L Kraxberger Middle,17777 Webster Rd,Gladstone,OR,97027,Clackamas,"17777 Webster Rd Gladstone, OR 97027",-122.5872192,45.3952671
 2083,Springfield SD 19,558,Walterville Elem,40589 McKenzie Hwy,Springfield,OR,97478,Lane,"40589 McKenzie Hwy Springfield, OR 97478",-122.7618003,44.0792753
 2053,Jefferson County SD 509J,432,Warm Springs K-8 Academy,50 Chukar Road,Warm Springs,OR,97761,Jefferson,"50 Chukar Road Warm Springs, OR 97761",-121.2566099,44.7579994
 1944,Scappoose SD 1J,160,Warren Elem,34555 Berg Rd,Warren,OR,97053,Columbia,"34555 Berg Rd Warren, OR 97053",-122.8555147,45.8131208
@@ -1357,7 +1357,7 @@ district_id,district_name,school_id,school_name,address,city,state,zip,county,fu
 2180,Portland SD 1J,902,Woodlawn Elem,7200 NE 11th Ave,Portland,OR,97211,Multnomah,"7200 NE 11th Ave Portland, OR 97211",-122.6531854,45.5749134
 2180,Portland SD 1J,903,Woodmere Elem,7900 SE Duke St,Portland,OR,97206,Multnomah,"7900 SE Duke St Portland, OR 97206",-122.5824729,45.4745839
 2180,Portland SD 1J,904,Woodstock Elem,5601 SE 50th Ave,Portland,OR,97206,Multnomah,"5601 SE 50th Ave Portland, OR 97206",-122.612305,45.4820555
-2142,Salem-Keizer SD 24J,737,Wright Elem,4060 Lone Oak Rd SE,Salem,OR,97302,Marion,"4060 Lone Oak Rd SE Salem, OR 97302",-123.0478429,44.8962685
+2142,Salem-Keizer SD 24J,737,Wright Elem,4060 Lone Oak Rd SE,Salem,OR,97302,Marion,"4060 Lone Oak Rd SE Salem, OR 97302",-123.0474806,44.8962124
 2024,Hood River County SD,367,WyEast Middle,3000 Wy'East Rd,Hood River,OR,97031,Hood River,"3000 Wy'East Rd Hood River, OR 97031",-121.5583259,45.6379613
 2251,Yamhill Carlton SD 1,1213,Yamhill Carlton Elem,420 S Third St,Carlton,OR,97111,Yamhill,"420 S Third St Carlton, OR 97111",-123.1715085,45.2909641
 2251,Yamhill Carlton SD 1,1238,Yamhill Carlton High,275 N Maple St,Yamhill,OR,97148,Yamhill,"275 N Maple St Yamhill, OR 97148",-123.1869157,45.3432964

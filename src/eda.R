@@ -72,13 +72,13 @@ sw_elem_enroll_all <- full_enroll %>%
   ) 
 
 enroll_change <- sw_elem_enroll_all %>%
-  filter(school_year %in% c(2019,2025)) %>%
+  filter(school_year %in% c(2019,2026)) %>%
   arrange(school_id,school_year) %>%
   group_by(school_id) %>%
   mutate(enroll_change = fall_ct-lag(fall_ct),
          enroll_change_pct = 100*(fall_ct-lag(fall_ct))/lag(fall_ct)) %>%
   select(school_id,school_year,enroll_change,enroll_change_pct) %>%
-  filter(school_year == 2025)
+  filter(school_year == 2026)
 
 sw_elem_enroll_all_with_change <- sw_elem_enroll_all %>%
   left_join(enroll_change, by = c('school_id','school_year'))
@@ -107,9 +107,9 @@ enroll_change_plt <- ggplot(sw_elem_enroll_all_with_change, aes(school_year, fal
     "2" = "#B4B2A9",
     "3" = "#B4B2A9"
   )) +
-  scale_x_continuous(limits = c(2018.75,2027),
-                     breaks = 2019:2025,
-                     labels = 2019:2025) +
+  scale_x_continuous(limits = c(2018.75,2028),
+                     breaks = 2019:2026,
+                     labels = 2019:2026) +
   ylim(240,630) +
   labs(x = "",
        y = "",
@@ -124,8 +124,8 @@ enroll_change_plt
 ggsave(
   plot = enroll_change_plt,
   file = 'prc/enroll-change-plt.png',
-  width = 8,
-  height = 5.5,
+  width = 9,
+  height = 6,
   units = 'in',
   dpi = 800
 )

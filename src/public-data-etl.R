@@ -36,8 +36,11 @@ gmap_key <- readLines('C:/Users/moyer/work/creds/gmap-key.txt')
 
 register_google(gmap_key)
 
-directory_mapped <- directory %>%
-  mutate_geocode(full_address) 
+# directory_mapped <- directory %>%
+#    mutate_geocode(full_address) 
+# write_csv(directory_mapped, 'prc/dir-mapped-temp.csv')
+
+directory_mapped <- read_csv('prc/dir-mapped-temp.csv')
 
 directory_final <- directory_mapped %>%
   mutate(
@@ -113,7 +116,7 @@ enroll_combined <- enroll_raw %>%
   relocate(c(school_id, school_name), .after = district_name)
 
 
-enroll_temp <- enroll_combined %>%
+enroll <- enroll_combined %>%
   filter(!value %in% c("-","*")) %>%
   mutate(
     value_reported = value,
@@ -260,9 +263,9 @@ enroll_temp <- enroll_combined %>%
   pivot_wider(names_from = c(season,var), values_from = c(value, value_reported)) %>%
   rename_with(.cols = everything(), ~gsub('value_',"", .x)) %>%
   mutate(fall_pct = round(100*fall_pct,1)) %>%
+  group_by(school_id,district_name) %>%
+  fill(district_id, .direction = 'down') %>%
   select(-reported_spring_pct,-reported_fall_pct)
-
-enroll <- enroll_temp
 
 write_csv(enroll, 'prc/enroll.csv', na = '')
 
@@ -496,19 +499,30 @@ funding_files <- list.files("raw/funding",
                          pattern = "*.xls*",
                          full.names = TRUE)
 
-funding_raw <- map(funding_files, function(file) {
-  sheets <- excel_sheets(file)
-  data_sheet <- sheets[!str_detect(sheets, "(?i)definition|note")]
-  read_excel(file, sheet = data_sheet[1], col_types = "text") %>%
-    clean_names() %>%
-    mutate(source_file = basename(file))
-}) %>%
-  bind_rows()
+funding_csvs <- list.files('raw/funding',
+                           pattern = "*.csv",
+                           full.names = TRUE)
+
+funding_raw <- bind_rows(
+  map(funding_files, function(file) {
+    sheets <- excel_sheets(file)
+    data_sheet <- sheets[!str_detect(sheets, "(?i)definition|note")]
+    read_excel(file, sheet = data_sheet[1], col_types = "text") |>
+      clean_names() |>
+      mutate(source_file = basename(file))
+  }),
+  map(funding_csvs, function(file) {
+    read_csv(file, col_types = cols(.default = "c"), show_col_types = FALSE) |>
+      clean_names() |>
+      mutate(source_file = basename(file))
+  })
+)
 
 funding <- funding_raw %>%
   mutate(
     school_year = case_when(
       str_detect(school_yr, "19-20") ~ 2020L,
+      str_detect(school_yr, "20-21") ~ 2021L,
       str_detect(school_yr, "21-22") ~ 2022L,
       str_detect(school_yr, "22-23") ~ 2023L,
       str_detect(school_yr, "23-24") ~ 2024L,
