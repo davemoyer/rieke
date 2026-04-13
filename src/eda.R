@@ -22,6 +22,8 @@ dir <- directory %>%
 
 enroll <- read_csv('prc/enroll.csv')
 analysis <- read_csv('prc/attend_tests_funding.csv')
+tests_long <- read_csv('prc/full_tests.csv') %>%
+  rename(n_participants = n_tested)
 
 full_enroll <- enroll %>%
   filter(level == 'school') %>%
@@ -271,7 +273,7 @@ ggsave(
 
 # performance ####
 
-rieke_prof <- analysis %>%
+rieke_prof <- tests_long %>%
   filter(str_detect(school_name,'Rieke') & grade == 'all' & student_group == 'all') %>%
   select(district_id:school_name,
          school_year,
@@ -282,7 +284,7 @@ rieke_prof <- analysis %>%
          pct_level_3,
          pct_level_4)
 
-sw_pps_prof <- analysis %>%
+sw_pps_prof <- tests_long %>%
   filter(school_id %in% sw_pps_elem & grade == 'all' & student_group == 'all') %>%
   select(district_id:school_name,
          school_year,
@@ -293,7 +295,7 @@ sw_pps_prof <- analysis %>%
          pct_level_3,
          pct_level_4)
 
-pps_elem_prof <- analysis %>%
+pps_elem_prof <- tests_long %>%
   filter(str_detect(school_name, 'Elementary') &
            district_name == 'Portland SD 1J' &
            grade == 'all' & student_group == 'all') %>%
@@ -306,7 +308,7 @@ pps_elem_prof <- analysis %>%
          pct_level_3,
          pct_level_4)
 
-state_elem_prof <- analysis %>%
+state_elem_prof <- tests_long %>%
   filter(str_detect(school_name, 'Elementary') &
            grade == 'all' & student_group == 'all') %>%
   select(district_id:school_name,
