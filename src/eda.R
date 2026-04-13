@@ -562,4 +562,150 @@ ggsave(
 )
 
 
+# finance ####
 
+funding_raw <- read_csv('raw/funding/2023-24 School Level Spending Report.csv') %>%
+  clean_names() %>%
+  filter(grade_band == 'Elementary' & governance == 'Public' & school_type == 'Regular') %>%
+  mutate(
+    per_pupil_exp = as.numeric(per_pupil_exp),
+    adm           = as.numeric(adm)
+  ) %>%
+  filter(!is.na(per_pupil_exp))
+
+sw_school_names <- c('Ainsworth', 'Bridlemile', 'Hayhurst', 'Rieke',
+                     'Capitol Hill', 'Maplewood', 'Markham', 'Stephenson')
+
+pps_elem_fin <- funding_raw %>%
+  filter(str_detect(district_name, 'Portland SD 1J')) %>%
+  mutate(
+    school_short = gsub(' Elementary School', '', school_name),
+    shade        = case_when(
+      str_detect(school_name, 'Rieke')  ~ '1',
+      school_short %in% sw_school_names ~ '2',
+      TRUE                              ~ '3'
+    )
+  ) %>%
+  filter(per_pupil_exp <= 40000)  # Whitman ($111k) excluded
+
+rieke_ppu     <- funding_raw %>% filter(str_detect(school_name, 'Rieke')) %>% pull(per_pupil_exp)
+or_median_ppu <- median(funding_raw$per_pupil_exp, na.rm = TRUE)
+
+
+## SW Portland bar chart ####
+
+sw_fin_order <- pps_elem_fin %>%
+  filter(school_short %in% sw_school_names) %>%
+  arrange(per_pupil_exp) %>%
+  pull(school_short)
+
+sw_fin_data <- pps_elem_fin %>%
+  filter(school_short %in% sw_school_names) %>%
+  mutate(school_short = factor(school_short, levels = sw_fin_order))
+
+fin_sw_plt <- ggplot(sw_fin_data, aes(per_pupil_exp, school_short)) +
+  geom_col(aes(fill = shade), width = 0.65) +
+  geom_text(
+    aes(x     = per_pupil_exp - 300,
+        label = paste0('$', format(round(per_pupil_exp, -2), big.mark = ','))),
+    color = 'white', hjust = 1, size = 3.5
+  ) +
+  scale_fill_manual(values = c('1' = '#1B2A4A', '2' = '#A8C4E0')) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05))) +
+  labs(
+    title    = 'SW Portland Elementary Per-Pupil Spending',
+    subtitle = '2023-24 total expenditures per pupil',
+    x = '', y = ''
+  ) +
+  theme_ipsum_pub(grid = FALSE) +
+  theme(legend.position = 'none', axis.text.x = element_blank())
+
+fin_sw_plt
+
+ggsave(plot = fin_sw_plt, file = 'prc/fin-sw-plt.png',
+       width = 8, height = 5.5, units = 'in', dpi = 800)
+
+
+## PPS ranking dot plot ####
+
+pps_fin_rank <- pps_elem_fin %>%
+  arrange(per_pupil_exp) %>%
+  mutate(rank = row_number())
+
+fin_rank_pps_plt <- ggplot(pps_fin_rank, aes(per_pupil_exp, rank)) +
+  geom_point(aes(color = shade, size = shade)) +
+  geom_text_repel(
+    data               = \(x) filter(x, shade %in% c('1', '2')),
+    aes(label          = paste0(school_short, ': $', format(round(per_pupil_exp, -2), big.mark = ',')),
+        color          = shade),
+    hjust              = 0,
+    nudge_x            = 400,
+    direction          = 'y',
+    segment.color      = 'gray70',
+    segment.alpha      = 0.5,
+    size               = 2.8,
+    min.segment.length = 0
+  ) +
+  scale_color_manual(values = c('1' = '#1B2A4A', '2' = '#A8C4E0', '3' = '#B4B2A9')) +
+  scale_size_manual(values  = c('1' = 4,          '2' = 3,          '3' = 2)) +
+  scale_x_continuous(
+    expand = expansion(mult = c(0.02, 0.35)),
+    labels = \(x) paste0('$', x / 1000, 'k')
+  ) +
+  scale_y_continuous(breaks = NULL) +
+  labs(
+    title    = 'Rieke Among All PPS Elementary Schools',
+    subtitle = '2023-24 per-pupil expenditures; Whitman ($111k) excluded',
+    x = 'Per-Pupil Expenditure', y = ''
+  ) +
+  theme_ipsum_pub(grid = FALSE) +
+  theme(legend.position = 'none', axis.text.y = element_blank())
+
+fin_rank_pps_plt
+
+ggsave(plot = fin_rank_pps_plt, file = 'prc/fin-rank-pps-plt.png',
+       width = 8, height = 6, units = 'in', dpi = 800)
+
+
+## Oregon statewide distribution ####
+
+or_hist_data  <- funding_raw %>% filter(per_pupil_exp <= 60000)
+or_hist_other <- or_hist_data %>% filter(!str_detect(district_name, 'Portland SD 1J'))
+fin_hist_max  <- max(hist(or_hist_other$per_pupil_exp,
+                           breaks = seq(0, 62000, 2000), plot = FALSE)$counts)
+
+fin_or_plt <- ggplot(or_hist_data, aes(per_pupil_exp)) +
+  geom_histogram(
+    data     = \(x) filter(x, !str_detect(district_name, 'Portland SD 1J')),
+    fill     = '#B4B2A9', color = 'white', binwidth = 2000, boundary = 0
+  ) +
+  geom_histogram(
+    data     = \(x) filter(x, str_detect(district_name, 'Portland SD 1J')),
+    fill     = '#A8C4E0', color = 'white', binwidth = 2000, boundary = 0
+  ) +
+  geom_vline(xintercept = or_median_ppu, color = 'gray50',  linewidth = 0.8, linetype = 'dashed') +
+  geom_vline(xintercept = rieke_ppu,     color = '#1B2A4A', linewidth = 1.2) +
+  annotate('text',
+           x = or_median_ppu - 400, y = fin_hist_max, vjust = 0, hjust = 1,
+           label = paste0('OR Median\n$', format(round(or_median_ppu, -2), big.mark = ',')),
+           color = 'gray40', size = 3.2) +
+  annotate('text',
+           x = rieke_ppu + 400, y = fin_hist_max, vjust = 0, hjust = 0,
+           label = paste0('Rieke\n$', format(round(rieke_ppu, -2), big.mark = ',')),
+           color = '#1B2A4A', size = 3.2, fontface = 'bold') +
+  scale_x_continuous(
+    labels = \(x) paste0('$', x / 1000, 'k'),
+    breaks = seq(0, 60000, 10000)
+  ) +
+  labs(
+    title    = 'Oregon Public Elementary School Per-Pupil Spending',
+    subtitle = 'Regular public schools, 2023-24; PPS schools in blue; schools above $60k not shown',
+    x = '', y = 'Schools'
+  ) +
+  theme_ipsum_pub(grid = FALSE) +
+  theme(legend.position = 'none')
+
+fin_or_plt
+
+ggsave(plot = fin_or_plt, file = 'prc/fin-or-plt.png',
+       width = 9, height = 5.5, units = 'in', dpi = 800)
