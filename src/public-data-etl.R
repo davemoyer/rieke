@@ -14,6 +14,7 @@ library(here)
 # notes ####
 # most files: https://www.oregon.gov/ode/schools-and-districts/reportcards/reportcards/Pages/Accountability-Measures.aspx
 
+
 # directory ####
 #https://www.ode.state.or.us/instID/
 
@@ -42,7 +43,7 @@ register_google(gmap_key)
 
 directory_mapped <- read_csv('prc/dir-mapped-temp.csv')
 
-directory_final <- directory_mapped %>%
+directory_updated <- directory_mapped %>%
   mutate(
     lon = case_when(
       full_address == '6th & Esther Ave Imbler, OR 97841' ~ -117.96489362513624, 
@@ -60,7 +61,73 @@ directory_final <- directory_mapped %>%
       full_address == '737 Succor Creek Rd Jordan Valley, OR 97910' ~ 43.31663036407091, 
       T ~ lat
     )
-  )
+  ) 
+
+## manual pps data ####
+gs4_auth(email = "moyer.david@gmail.com")
+
+katie_pps_sheet <- as_sheets_id('https://docs.google.com/spreadsheets/d/179Kbm1LIO52magk27T2dGTJVfiBLQmF-89m_xO9yUDk/edit?gid=0#gid=0')
+
+manual_pps <- read_sheet(ss = katie_pps_sheet, col_types = 'c')
+
+manual <- manual_pps %>%
+  janitor::clean_names() %>%
+  select(
+    school_name        = school,
+    area,
+    capacity           = building_capacity,
+    predicted_enroll_27 = x26_27_predicted_enrollment,
+    alternative_focus,
+    building_seismic_rating,
+    blended_classrooms
+  ) %>%
+  mutate(
+    across(c(capacity, predicted_enroll_27)),
+    school_name = str_squish(school_name)
+  ) %>%
+  left_join(
+    directory %>%
+      filter(district_name == 'Portland SD 1J') %>%
+      select(school_id, school_name) %>%
+      mutate(school_name_short = gsub(' Elem| High | Middle | Elementary School| School', '', school_name)),
+    by = c('school_name' = 'school_name_short')
+  ) %>%
+  mutate(school_id = case_when(
+    school_name == 'Odyssey'                  ~ NA_integer_,
+    school_name == 'Metropolitan Learning Center' ~ 916,
+    school_name == 'Alliance'                 ~ 4507,
+    school_name == 'MLK Jr.'                  ~ 866,
+    school_name == 'George'                   ~ 849,
+    school_name == 'Jefferson'                ~ 913,
+    school_name == 'Beaumont'                 ~ 831,
+    school_name == 'Mt. Tabor'                ~ 877,
+    school_name == 'Cesar Chavez'             ~ 841,
+    school_name == 'Lane'                     ~ 1243,
+    school_name == 'da Vinci'                 ~ 1363,
+    school_name == 'Gray'                     ~ 852,
+    school_name == 'Ockley Green'             ~ 878,
+    school_name == 'Harriet Tubman'           ~ 894,
+    school_name == 'Kellogg'                  ~ 863,
+    school_name == 'Hosford'                  ~ 858,
+    school_name == 'Sellwood'                 ~ 888,
+    school_name == 'West Sylvan'              ~ 898,
+    school_name == 'Benson'                   ~ 906,
+    school_name == 'Roosevelt'                ~ 918,
+    school_name == 'Cleveland'                ~ 909,
+    school_name == 'Ida B. Wells'             ~ 922,
+    school_name == 'McDaniel'                 ~ 915,
+    school_name == 'Lincoln'                  ~ 914,
+    school_name == 'Franklin'                 ~ 911,
+    school_name == 'Grant'                    ~ 912,
+    .default = school_id
+  ))
+
+directory_final <- directory_updated %>%
+  left_join(manual %>%
+              select(-school_name,-school_name.y),
+            by = 'school_id')
+
+## write directory data ####
 
 write_csv(directory_final, 'prc/directory.csv', na = "")
 
@@ -538,6 +605,7 @@ funding <- funding_raw %>%
          fed_per_pupil_exp,
          state_local_per_pupil_exp) %>%
   mutate(across(contains("exp"), ~round(as.numeric(.x))))
+
 
 # combine ####
 analysis <- school_attend %>%
