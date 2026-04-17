@@ -777,3 +777,221 @@ fin_sw_plt
 
 ggsave(plot = fin_sw_plt, file = 'prc/fin-sw-plt.png',
        width = 8, height = 5.5, units = 'in', dpi = 800)
+
+
+# attendance ####
+
+attend_base <- analysis %>%
+  filter(grade == 'all' & student_group == 'all' & !is.na(pct_regular)) %>%
+  distinct(school_id, school_year, .keep_all = TRUE) %>%
+  select(district_id, district_name, school_id, school_name, school_year,
+         n_regular, pct_regular, n_absent, pct_absent)
+
+rieke_attend      <- attend_base %>% filter(school_id == 1299)
+sw_pps_attend     <- attend_base %>% filter(school_id %in% sw_pps_elem)
+pps_elem_attend   <- attend_base %>% filter(str_detect(school_name, 'Elementary') &
+                                              district_name == 'Portland SD 1J')
+state_elem_attend <- attend_base %>% filter(str_detect(school_name, 'Elementary'))
+
+
+## attendance trend ####
+
+pps_attend_avg <- pps_elem_attend %>%
+  group_by(school_year) %>%
+  summarise(across(c(n_regular, n_absent), ~sum(.x, na.rm = TRUE)), .groups = 'drop') %>%
+  mutate(pct_regular = 100 * n_regular / (n_regular + n_absent),
+         label = 'PPS Elem Avg', shade = '3')
+
+sw_attend_avg <- sw_pps_attend %>%
+  filter(school_id != 1299) %>%
+  group_by(school_year) %>%
+  summarise(across(c(n_regular, n_absent), ~sum(.x, na.rm = TRUE)), .groups = 'drop') %>%
+  mutate(pct_regular = 100 * n_regular / (n_regular + n_absent),
+         label = 'Other SW Elem', shade = '2')
+
+rieke_attend_trend <- rieke_attend %>%
+  mutate(label = 'Rieke', shade = '1') %>%
+  select(school_year, pct_regular, label, shade)
+
+attend_trend_data <- bind_rows(rieke_attend_trend, sw_attend_avg, pps_attend_avg)
+
+attend_trend_plt <- ggplot(attend_trend_data, aes(school_year, pct_regular, group = label)) +
+  geom_line(aes(color = shade)) +
+  geom_point(aes(color = shade)) +
+  geom_text_repel(
+    data          = \(x) slice_max(x, school_year, n = 1, by = label),
+    aes(label     = paste0(label, ': ', round(pct_regular, 1), '%'), color = shade),
+    hjust         = 0,
+    nudge_x       = 0.2,
+    direction     = 'y',
+    segment.color = NA
+  ) +
+  scale_color_manual(values = c(
+    '1' = '#1B2A4A',
+    '2' = '#A8C4E0',
+    '3' = '#B4B2A9'
+  )) +
+  scale_x_continuous(
+    limits = c(2018.5, 2028.5),
+    breaks = c(2019, 2022, 2023, 2024, 2025),
+    labels = c("'19", "'22", "'23", "'24", "'25")
+  ) +
+  labs(
+    x        = '',
+    y        = '',
+    title    = 'Rieke attendance has recovered from its post-pandemic low',
+    subtitle = 'Percent of students attending school regularly (inverse of chronic absenteeism)'
+  ) +
+  theme_ipsum_pub(grid = FALSE) +
+  theme(
+    legend.position = 'none',
+    axis.text.y     = element_blank()
+  )
+
+attend_trend_plt
+
+ggsave(
+  plot   = attend_trend_plt,
+  file   = 'prc/attend-trend-plt.png',
+  width  = 9,
+  height = 5.5,
+  units  = 'in',
+  dpi    = 800
+)
+
+
+## PPS ranking dot plot ####
+
+pps_attend_rank <- pps_elem_attend %>%
+  filter(school_year == 2025) %>%
+  mutate(
+    shade        = case_when(
+      school_id == 1299          ~ '1',
+      school_id %in% sw_pps_elem ~ '2',
+      TRUE                       ~ '3'
+    ),
+    school_short = gsub(' Elementary School', '', school_name)
+  ) %>%
+  arrange(pct_regular) %>%
+  mutate(rank = row_number())
+
+attend_rank_pps_plt <- ggplot(pps_attend_rank, aes(pct_regular, rank)) +
+  geom_point(aes(color = shade, size = shade)) +
+  geom_text_repel(
+    data               = \(x) filter(x, shade %in% c('1', '2')),
+    aes(label          = paste0(school_short, ': ', round(pct_regular, 1), '%'),
+        color          = shade),
+    hjust              = 0,
+    nudge_x            = 1,
+    direction          = 'y',
+    segment.color      = 'gray70',
+    segment.alpha      = 0.5,
+    size               = 2.8,
+    min.segment.length = 0
+  ) +
+  scale_color_manual(values = c('1' = '#1B2A4A', '2' = '#A8C4E0', '3' = '#B4B2A9')) +
+  scale_size_manual(values  = c('1' = 4,          '2' = 3,          '3' = 2)) +
+  scale_x_continuous(
+    expand = expansion(mult = c(0.02, 0.35)),
+    labels = \(x) paste0(x, '%')
+  ) +
+  scale_y_continuous(breaks = NULL) +
+  labs(
+    title    = 'Rieke Attendance Among All PPS Elementary Schools',
+    subtitle = '2024-25 percent of students attending regularly',
+    x        = '% Regular Attenders',
+    y        = ''
+  ) +
+  theme_ipsum_pub(grid = FALSE) +
+  theme(legend.position = 'none', axis.text.y = element_blank())
+
+attend_rank_pps_plt
+
+ggsave(plot = attend_rank_pps_plt, file = 'prc/attend-rank-pps-plt.png',
+       width = 8, height = 6, units = 'in', dpi = 800)
+
+
+## state ranking dot plot ####
+
+state_attend_rank <- state_elem_attend %>%
+  filter(school_year == 2025) %>%
+  mutate(
+    shade        = case_when(
+      school_id == 1299          ~ '1',
+      school_id %in% sw_pps_elem ~ '2',
+      TRUE                       ~ '3'
+    ),
+    school_short = gsub(' Elementary School', '', school_name)
+  ) %>%
+  arrange(pct_regular) %>%
+  mutate(rank = row_number())
+
+attend_rank_state_plt <- ggplot(state_attend_rank, aes(pct_regular, rank)) +
+  geom_point(aes(color = shade, size = shade)) +
+  geom_text_repel(
+    data               = \(x) filter(x, shade == '1'),
+    aes(label          = paste0(school_short, ': ', round(pct_regular, 1), '%'),
+        color          = shade),
+    hjust              = 1,
+    nudge_x            = -1,
+    direction          = 'y',
+    segment.color      = 'gray70',
+    segment.alpha      = 0.5,
+    size               = 2.8,
+    min.segment.length = 0
+  ) +
+  scale_color_manual(values = c('1' = '#1B2A4A', '2' = '#A8C4E0', '3' = '#B4B2A9')) +
+  scale_size_manual(values  = c('1' = 4,          '2' = 3,          '3' = 1)) +
+  scale_x_continuous(labels = \(x) paste0(x, '%')) +
+  scale_y_continuous(breaks = NULL) +
+  labs(
+    title    = 'Rieke Attendance Among All Oregon Elementary Schools',
+    subtitle = '2024-25 percent of students attending regularly',
+    x        = '% Regular Attenders',
+    y        = ''
+  ) +
+  theme_ipsum_pub(grid = FALSE) +
+  theme(legend.position = 'none', axis.text.y = element_blank())
+
+attend_rank_state_plt
+
+ggsave(plot = attend_rank_state_plt, file = 'prc/attend-rank-state-plt.png',
+       width = 10, height = 6, units = 'in', dpi = 800)
+
+
+## SW Portland bar chart ####
+
+sw_attend_order <- sw_pps_attend %>%
+  filter(school_year == 2025) %>%
+  arrange(pct_regular) %>%
+  mutate(school_short = gsub(' Elementary School', '', school_name)) %>%
+  pull(school_short)
+
+sw_attend_data <- sw_pps_attend %>%
+  filter(school_year == 2025) %>%
+  mutate(
+    shade        = case_when(school_id == 1299 ~ '1', TRUE ~ '2'),
+    school_short = factor(gsub(' Elementary School', '', school_name), levels = sw_attend_order)
+  )
+
+attend_sw_plt <- ggplot(sw_attend_data, aes(pct_regular, school_short)) +
+  geom_col(aes(fill = shade), width = 0.65) +
+  geom_text(
+    aes(x = pct_regular - 1, label = paste0(round(pct_regular, 1), '%')),
+    color = 'white', hjust = 1, size = 3.5
+  ) +
+  scale_fill_manual(values = c('1' = '#1B2A4A', '2' = '#A8C4E0')) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05))) +
+  labs(
+    title    = 'SW Portland Elementary Regular Attendance',
+    subtitle = '2024-25 percent of students attending regularly',
+    x        = '',
+    y        = ''
+  ) +
+  theme_ipsum_pub(grid = FALSE) +
+  theme(legend.position = 'none', axis.text.x = element_blank())
+
+attend_sw_plt
+
+ggsave(plot = attend_sw_plt, file = 'prc/attend-sw-plt.png',
+       width = 8, height = 5.5, units = 'in', dpi = 800)
