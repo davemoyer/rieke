@@ -20,6 +20,8 @@ dir <- directory %>%
   select(-school_name,-district_name) %>%
   mutate(district_id = as.numeric(district_id))
 
+grades_served <- read_csv('prc/grades-served.csv')
+
 enroll <- read_csv('prc/enroll.csv')
 analysis <- read_csv('prc/attend_tests_funding.csv')
 tests_long <- read_csv('prc/full_tests.csv') %>%
@@ -38,6 +40,16 @@ sw_pps_elem <- c(823,  #Ainsworth
                  1278, #Markham
                  892  #Stevenson
                  )
+
+all_pps_elem <- grades_served %>%
+  filter(district_name == 'Portland SD 1J' & grades_served == 'K-5') %>%
+  pull(school_id) %>%
+  unique()
+
+all_or_elem <- grades_served %>%
+  filter(grades_served %in% c('K-5',"K-6","K-4")) %>%
+  pull(school_id) %>%
+  unique()
 
 bps_elem <- c(1278, #Montclair
               1172, #Raleigh Hills Elem
@@ -296,8 +308,7 @@ sw_pps_prof <- tests_long %>%
          pct_level_4)
 
 pps_elem_prof <- tests_long %>%
-  filter(str_detect(school_name, 'Elementary') &
-           district_name == 'Portland SD 1J' &
+  filter(school_id %in% all_pps_elem &
            grade == 'all' & student_group == 'all') %>%
   select(district_id:school_name,
          school_year,
@@ -309,7 +320,7 @@ pps_elem_prof <- tests_long %>%
          pct_level_4)
 
 state_elem_prof <- tests_long %>%
-  filter(str_detect(school_name, 'Elementary') &
+  filter(school_id %in% all_or_elem &
            grade == 'all' & student_group == 'all') %>%
   select(district_id:school_name,
          school_year,
@@ -432,7 +443,7 @@ prof_rank_pps_plt <- ggplot(pps_rank_2025, aes(pct_proficient, rank)) +
   scale_x_continuous(limits = c(0, 95)) +
   facet_wrap(~subject_label) +
   labs(
-    title    = 'Rieke was the top PPS Elementary School in 2024-2025',
+    title    = 'Rieke was the top PPS elementary school in 2024-2025',
     subtitle = '2024-25 proficiency on Oregon state assessments',
     x        = '% Proficient (Levels 3 & 4)',
     y        = ''
@@ -490,7 +501,7 @@ prof_rank_state_plt <- ggplot(state_rank_2025, aes(pct_proficient, rank)) +
   scale_x_continuous(limits = c(0, 95)) +
   facet_wrap(~subject_label) +
   labs(
-    title    = 'Rieke was the third best Elementary School in Oregon in 2024-2025',
+    title    = 'Rieke was the third best elementary school in Oregon in 2024-2025',
     subtitle = '2024-25 proficiency on Oregon state assessments',
     x        = '% Proficient (Levels 3 & 4)',
     y        = ''
@@ -572,31 +583,30 @@ fin_base <- analysis %>%
            !is.na(total_exp)) %>%
   distinct(school_id, school_year, .keep_all = TRUE) %>%
   select(district_id, district_name, school_id, school_name, school_year,
-         total_exp, per_pupil_exp)
+         adm,total_exp, per_pupil_exp)
 
 rieke_fin      <- fin_base %>% filter(school_id == 1299)
 sw_pps_fin     <- fin_base %>% filter(school_id %in% sw_pps_elem)
-pps_elem_fin   <- fin_base %>% filter(str_detect(school_name, 'Elementary') &
-                                        district_name == 'Portland SD 1J')
-state_elem_fin <- fin_base %>% filter(str_detect(school_name, 'Elementary'))
+pps_elem_fin   <- fin_base %>% filter(school_id %in% all_pps_elem)
+state_elem_fin <- fin_base %>% filter(school_id %in% all_or_elem)
 
 
 ## finance trend ####
 
 pps_fin_avg <- pps_elem_fin %>%
   group_by(school_year) %>%
-  summarise(per_pupil_exp = sum(total_exp) / sum(total_exp / per_pupil_exp), .groups = 'drop') %>%
+  summarise(per_pupil_exp = sum(total_exp) / sum(adm), .groups = 'drop') %>%
   mutate(label = 'PPS Elem Avg', shade = '3')
 
 sw_fin_avg <- sw_pps_fin %>%
   filter(school_id != 1299) %>%
   group_by(school_year) %>%
-  summarise(per_pupil_exp = sum(total_exp) / sum(total_exp / per_pupil_exp), .groups = 'drop') %>%
+  summarise(per_pupil_exp = sum(total_exp) / sum(adm), .groups = 'drop') %>%
   mutate(label = 'Other SW Elem', shade = '2')
 
 state_fin_avg <- state_elem_fin %>%
   group_by(school_year) %>%
-  summarise(per_pupil_exp = sum(total_exp) / sum(total_exp / per_pupil_exp), .groups = 'drop') %>%
+  summarise(per_pupil_exp = sum(total_exp) / sum(adm), .groups = 'drop') %>%
   mutate(label = 'State Elem Avg', shade = '4')
 
 rieke_fin_trend <- rieke_fin %>%
@@ -606,7 +616,7 @@ rieke_fin_trend <- rieke_fin %>%
 fin_trend_data <- bind_rows(rieke_fin_trend, sw_fin_avg, pps_fin_avg, state_fin_avg)
 
 fin_trend_plt <- ggplot(fin_trend_data, aes(school_year, per_pupil_exp, group = label)) +
-  geom_line(aes(color = shade)) +
+  geom_line(aes(color = shade), size = 1) +
   geom_point(aes(color = shade)) +
   geom_text_repel(
     data          = \(x) slice_max(x, school_year, n = 1, by = label),
@@ -625,14 +635,14 @@ fin_trend_plt <- ggplot(fin_trend_data, aes(school_year, per_pupil_exp, group = 
   )) +
   scale_x_continuous(
     limits = c(2021.5, 2026.5),
-    breaks = c(2022, 2023),
-    labels = c("'21-22", "'22-23")
+    breaks = c(2022, 2023, 2024),
+    labels = c("'21-22", "'22-23", "'23-24")
   ) +
   scale_y_continuous(labels = \(x) paste0('$', x / 1000, 'k')) +
   labs(
     x        = '',
     y        = '',
-    title    = 'SW Portland Elementary Per-Pupil Spending',
+    title    = "Rieke spending growth mirrors district peers",
     subtitle = 'Total expenditures per pupil'
   ) +
   theme_ipsum_pub(grid = FALSE) +
@@ -641,7 +651,7 @@ fin_trend_plt <- ggplot(fin_trend_data, aes(school_year, per_pupil_exp, group = 
 fin_trend_plt
 
 ggsave(plot = fin_trend_plt, file = 'prc/fin-trend-plt.png',
-       width = 9, height = 5.5, units = 'in', dpi = 800)
+       width = 11, height = 5.5, units = 'in', dpi = 800)
 
 
 ## PPS ranking dot plot ####
@@ -676,13 +686,15 @@ fin_rank_pps_plt <- ggplot(pps_fin_rank, aes(per_pupil_exp, rank)) +
   scale_color_manual(values = c('1' = '#1B2A4A', '2' = '#A8C4E0', '3' = '#B4B2A9')) +
   scale_size_manual(values  = c('1' = 4,          '2' = 3,          '3' = 2)) +
   scale_x_continuous(
-    expand = expansion(mult = c(0.02, 0.35)),
-    labels = \(x) paste0('$', x / 1000, 'k')
+    #expand = expansion(mult = c(0.02, 0.35)),
+    labels = \(x) paste0('$', x / 1000, 'k'),
+    limits = c(0,55000)
   ) +
   scale_y_continuous(breaks = NULL) +
   labs(
     title    = 'Rieke Among All PPS Elementary Schools',
-    subtitle = '2022-23 per-pupil expenditures',
+    subtitle = '2023-24 per-pupil expenditures',
+    caption = 'Whitman Elementary excluded ',
     x = 'Per-Pupil Expenditure', y = ''
   ) +
   theme_ipsum_pub(grid = FALSE) +
@@ -729,7 +741,8 @@ fin_rank_state_plt <- ggplot(state_fin_rank, aes(per_pupil_exp, rank)) +
   scale_y_continuous(breaks = NULL) +
   labs(
     title    = 'Rieke Among All Oregon Elementary Schools',
-    subtitle = '2022-23 per-pupil expenditures; schools above $60k not shown',
+    subtitle = '2023-24 per-pupil expenditures',
+    caption = 'Schools above $60k not shown',
     x = 'Per-Pupil Expenditure', y = ''
   ) +
   theme_ipsum_pub(grid = FALSE) +
@@ -767,7 +780,7 @@ fin_sw_plt <- ggplot(sw_fin_data, aes(per_pupil_exp, school_short)) +
   scale_x_continuous(expand = expansion(mult = c(0, 0.05))) +
   labs(
     title    = 'SW Portland Elementary Per-Pupil Spending',
-    subtitle = '2022-23 total expenditures per pupil',
+    subtitle = '2023-24 total expenditures per pupil',
     x = '', y = ''
   ) +
   theme_ipsum_pub(grid = FALSE) +
@@ -789,9 +802,8 @@ attend_base <- analysis %>%
 
 rieke_attend      <- attend_base %>% filter(school_id == 1299)
 sw_pps_attend     <- attend_base %>% filter(school_id %in% sw_pps_elem)
-pps_elem_attend   <- attend_base %>% filter(str_detect(school_name, 'Elementary') &
-                                              district_name == 'Portland SD 1J')
-state_elem_attend <- attend_base %>% filter(str_detect(school_name, 'Elementary'))
+pps_elem_attend   <- attend_base %>% filter(school_id %in% all_pps_elem)
+state_elem_attend <- attend_base %>% filter(school_id %in% all_or_elem)
 
 
 ## attendance trend ####

@@ -212,8 +212,12 @@ enroll <- enroll_combined %>%
     str_detect(variable,'2025_26|2025_2026') ~ 2026
   ),
   level = case_when(
-    str_detect(source_sheet,'(?i)school') ~ 'school',
-    str_detect(source_sheet, '(?i)district') ~ 'district'
+    str_detect(source_sheet, '(?i)district') ~ 'district',
+    is.na(school_id) ~ 'district',
+    school_id == district_id ~ 'district',
+    school_name == district_name ~ 'district',
+    !is.na(school_id) & school_id != district_id ~ 'school',
+    T ~ 'school'
   ),
   grade = case_when(
     str_detect(variable,'kinder') ~ 'k',
@@ -331,10 +335,45 @@ enroll <- enroll_combined %>%
   rename_with(.cols = everything(), ~gsub('value_',"", .x)) %>%
   mutate(fall_pct = round(100*fall_pct,1)) %>%
   group_by(school_id,district_name) %>%
-  fill(district_id, .direction = 'down') %>%
-  select(-reported_spring_pct,-reported_fall_pct)
+  fill(c(district_id,district_name), .direction = 'downup') %>%
+  mutate(district_id = ifelse(is.na(district_id) & level == 'district', school_id,district_id),
+         district_name = ifelse(is.na(district_name) & level == 'district', school_name,district_name)) %>%
+  select(-reported_spring_pct,-reported_fall_pct) %>%
+  distinct()
 
 write_csv(enroll, 'prc/enroll.csv', na = '')
+
+# grades served ####
+grades_served <- enroll %>%
+  filter(level == 'school' & grade != 'all' & student_group == 'all' & fall_ct > 0) %>%
+  select(district_id,
+         district_name,
+         school_id,
+         school_name,
+         school_year,
+         grade,
+         fall_ct) %>%
+  mutate(grade_num = case_when(
+    grade == 'k' ~ 0,
+    T ~ as.numeric(grade)
+  )) %>%
+  group_by(district_id,district_name,school_id,school_name,school_year) %>%
+  arrange(district_id,school_id,school_year,grade_num) %>%
+  summarise(min_grade = min(grade_num),
+            max_grade = max(grade_num),
+            all_grades = paste(grade, collapse = ", ")) %>%
+  mutate(across(c(min_grade,max_grade), ~ifelse(.x == 0, 'K',as.character(.x))),
+         grades_served = paste0(min_grade,"-",max_grade),
+         school_level = case_when(
+           max_grade %in% c('K','1','2','3','4','5','6') ~ 'ES',
+           grades_served %in% c('5-8','6-8','7-8') ~ 'MS',
+           grades_served %in% c('K-7','K-8') ~ 'ES/MS',
+           grades_served %in% c('1-12','K-11','K-12') ~ 'K-12',
+           grades_served %in% c('9-12') ~ 'HS',
+           T ~ 'Other'
+         ))
+
+write_csv(grades_served, 'prc/grades-served.csv')
 
 # filter groups ####
 
@@ -585,7 +624,10 @@ funding_raw <- bind_rows(
   })
 )
 
-funding <- funding_raw %>%
+funding_full <- funding_raw %>%
+  filter(!is.na(school_yr)) %>%
+  remove_empty("cols") %>%
+  remove_constant() %>%
   mutate(
     school_year = case_when(
       str_detect(school_yr, "19-20") ~ 2020L,
@@ -594,12 +636,17 @@ funding <- funding_raw %>%
       str_detect(school_yr, "22-23") ~ 2023L,
       str_detect(school_yr, "23-24") ~ 2024L,
       str_detect(school_yr, "24-25") ~ 2025L
-    )) %>%
+    )) 
+
+write_csv(funding_full, 'prc/funding.csv')
+
+funding <- funding_full %>%
   select(school_year,
          district_id,
          district_name,
          school_id,
          school_name,
+         adm,
          total_exp = total_expenditures,
          per_pupil_exp,
          fed_per_pupil_exp,
@@ -610,6 +657,7 @@ funding <- funding_raw %>%
 # combine ####
 analysis <- school_attend %>%
   select(-level) %>%
+  left_join(grades_served[, c('district_id','school_id','school_year','min_grade','max_grade','all_grades','grades_served','school_level')]) %>%
   left_join(tests_wide, by = c('district_id', 'school_id','school_year','grade','student_group'), suffix = c("","_1")) %>%
   left_join(funding, by = c('district_id','school_id','school_year'), suffix = c("","_2")) %>%
   select(-school_name_1,-district_name_1,-school_name_2,-district_name_2)
