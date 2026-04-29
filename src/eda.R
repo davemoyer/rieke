@@ -361,7 +361,7 @@ prof_trend_data <- bind_rows(rieke_trend, sw_elem_avg_trend, pps_elem_avg_trend)
   ))
 
 prof_trend_plt <- ggplot(prof_trend_data, aes(school_year, pct_proficient, group = interaction(label, subject_label))) +
-  geom_line(aes(color = shade)) +
+  geom_line(aes(color = shade), size = 1) +
   geom_point(aes(color = shade)) +
   geom_text_repel(
     data          = \(x) slice_max(x, school_year, n = 1, by = c(label, subject_label)),
@@ -369,7 +369,8 @@ prof_trend_plt <- ggplot(prof_trend_data, aes(school_year, pct_proficient, group
     hjust         = 0,
     nudge_x       = 0.2,
     direction     = 'y',
-    segment.color = NA
+    segment.color = NA,
+    fontface = "bold"
   ) +
   scale_color_manual(values = c(
     '1' = '#1B2A4A',
@@ -464,6 +465,45 @@ ggsave(
   units  = 'in',
   dpi    = 800
 )
+
+prof_rank_pps_ela <- ggplot(
+  pps_rank_2025 |> filter(subject == "ela") |> mutate(school_short = reorder(school_short, pct_proficient)),
+  aes(school_short, pct_proficient)
+) +
+  geom_col(aes(fill = shade)) +
+  geom_text(
+    data     = \(x) filter(x, shade %in% c("1", "2")),
+    aes(label = school_short, color = shade, y = 0),
+    hjust    = 1,
+    nudge_y  = -1,
+    fontface = "bold"
+  ) +
+  geom_text(
+    data     = \(x) filter(x, shade %in% c("1", "2")),
+    aes(label = paste0(round(pct_proficient,1), "%"), color = shade),
+    hjust    = 0,
+    nudge_y  = 1,
+    fontface = "bold"
+  ) +
+  coord_flip() +
+  scale_fill_manual(values  = c("1" = "#1B2A4A", "2" = "#A8C4E0", "3" = "#B4B2A9")) +
+  scale_color_manual(values = c("1" = "#1B2A4A", "2" = "#A8C4E0", "3" = "#B4B2A9")) +
+  scale_y_continuous(limits = c(-25, 100)) +
+  facet_wrap(~subject_label) +
+  labs(
+    title    = "Rieke was the top PPS elementary school in 2024-2025",
+    subtitle = "2024-25 proficiency on Oregon state assessments",
+    y        = "% Proficient (Levels 3 & 4)",
+    x        = ""
+  ) +
+  theme_ipsum_pub(grid = FALSE) +
+  theme(
+    legend.position  = "none",
+    axis.text.y      = element_blank(),
+    axis.title.y     = element_text(hjust = 0.5),
+    strip.text       = element_text(hjust = 0.5)
+  )
+prof_rank_pps_ela
 
 ## state elem rank ####
 state_rank_2025 <- state_elem_prof %>%

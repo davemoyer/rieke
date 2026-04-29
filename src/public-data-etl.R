@@ -133,8 +133,9 @@ write_csv(directory_final, 'prc/directory.csv', na = "")
 
 # enroll ####
 
+## state ####
 enroll_files <- list.files("raw/enroll", 
-                           pattern = "*.xls*",
+                           pattern = "(fall|spring).*\\.xlsx?$",
                            full.names = TRUE)
   
 enroll_sheets <- lapply(enroll_files,excel_sheets)
@@ -182,7 +183,183 @@ enroll_combined <- enroll_raw %>%
   bind_rows() %>%
   relocate(c(school_id, school_name), .after = district_name)
 
+## pps ####
+enroll_pps_raw <- read_excel('raw/enroll/SchoolProfiles-October_2025_Enrollment_Summary10yrdetail.xlsx',
+                             range = "A2:M144", col_types = 'text')
 
+enroll_pps <- enroll_pps_raw %>%
+  select(-2) %>%
+  clean_names() %>%
+  filter(!(x2025_26 %in% c('Closed','Merged'))) %>%
+  rename(school_short = school,
+         grades_served = grade) %>%
+  pivot_longer(cols = starts_with('x'), names_to = 'school_year', values_to = 'fall_ct_pps') %>%
+  mutate(grades_served = gsub('G','',grades_served),
+         school_year = as.numeric(paste0("20",str_sub(school_year,-2,-1)))) %>%
+  filter(!is.na(fall_ct_pps)) %>%
+  left_join(
+    directory %>%
+      filter(district_name == 'Portland SD 1J') %>%
+      select(school_id, school_name) %>%
+      mutate(school_name_short = gsub(' Elem| High | Middle | Elementary School| School| High School', '', school_name)),
+    by = c('school_short' = 'school_name_short')
+  ) %>%
+  mutate(school_id = case_when(
+    school_short == 'Odyssey'                  ~ NA_integer_,
+    school_short == 'Metropolitan Learning Center' ~ 916,
+    str_detect(school_short, 'Boise-Eliot') ~ 833,
+    school_short == 'Alliance'                 ~ 4507,
+    school_short == 'MLK Jr'                  ~ 866,
+    school_short == 'George'                   ~ 849,
+    school_short == 'Jefferson'                ~ 913,
+    school_short == 'Beaumont'                 ~ 831,
+    school_short == 'Mt. Tabor'                ~ 877,
+    school_short == 'César Chávez'       ~ 841,
+    school_short == 'Lane'                     ~ 1243,
+    school_short == 'da Vinci'                 ~ 1363,
+    school_short == 'Gray'                     ~ 852,
+    school_short == 'Ockley Green'             ~ 878,
+    school_short == 'Harriet Tubman'           ~ 894,
+    school_short == 'Kellogg'                  ~ 863,
+    school_short == 'Hosford'                  ~ 858,
+    school_short == 'Sellwood'                 ~ 888,
+    school_short == 'West Sylvan'              ~ 898,
+    school_short == 'Benson'                   ~ 906,
+    school_short == 'Roosevelt'                ~ 918,
+    school_short == 'Cleveland'                ~ 909,
+    school_short == 'Ida B. Wells'             ~ 922,
+    school_short == 'McDaniel'                 ~ 915,
+    school_short == 'Lincoln'                  ~ 914,
+    school_short == 'Franklin'                 ~ 911,
+    school_short == 'Grant'                    ~ 912,
+    .default = school_id
+  ),
+  district_id = '2180',
+  district_name = 'Portland SD 1J',
+  school_id = as.character(school_id),
+  grade = 'all',
+  student_group = 'all',
+  level = 'school') %>%
+  select(-school_short) %>% 
+  filter(is.na(school_id))
+
+enroll_pps_group_files <- list.files("raw/enroll-pps", 
+                                     pattern = "(nderserv).*\\.xlsx?$",
+                                     full.names = TRUE)
+
+enroll_pps_group_raw <- lapply(enroll_pps_group_files, function(f) {
+  read_excel(f) %>%
+    clean_names() %>%
+    rename(school_short = x1) %>%
+    filter(!is.na(school_short) & school_short != 'Name' & !is.na(enroll) & 
+             str_detect(school_short, 'Total', negate = TRUE))
+}) %>%
+  setNames(enroll_pps_group_files) %>%
+  bind_rows(.id = 'src')
+
+enroll_pps_group <- enroll_pps_group_raw %>%
+  select(
+    src,
+    school_short,
+    all = enroll,
+    combined_underserved,
+    direct_cert          = direct_certification,
+    lep,
+    lep2 = multilingual_learner_lep,
+    sped                 = sp_ed,
+    historically_underserved,
+    latino,
+    black,
+    multi                = multi_race
+  ) %>%
+  mutate(
+    school_year = case_when(
+      str_detect(src, "\\d{2}-\\d{2}\\.xlsx") ~
+        2000L + as.integer(str_extract(src, "(?<=-)\\d{2}(?=\\.xlsx)")),
+      str_detect(src, "oct25") ~ 2025L,
+      TRUE ~ 2000L + as.integer(str_extract(src, "\\d{2}(?=\\.xlsx)"))
+    )
+  ) %>%
+  select(-src) %>%
+  left_join(
+    directory %>%
+      filter(district_name == "Portland SD 1J") %>%
+      select(school_id, school_name) %>%
+      mutate(school_name_short = gsub(
+        " Elem| High | Middle | Elementary School| School| High School",
+        "", school_name
+      )),
+    by = c("school_short" = "school_name_short")
+  ) %>%
+  mutate(
+    school_id = case_when(
+      school_short == "Odyssey"                      ~ NA_integer_,
+      school_short %in% c("Metropolitan Learning Center",
+                          "Metro. Learning Center")  ~ 916L,
+      school_short == "Metropolitan Learning Center" ~ 916L,
+      str_detect(school_short, "Boise-Eliot")        ~ 833L,
+      school_short == "Alliance"                     ~ 4507L,
+      str_detect(school_short, "MLK")                ~ 866L,
+      school_short == "George"                       ~ 849L,
+      school_short == "Jefferson"                    ~ 913L,
+      str_detect(school_short, "Jackson")            ~ 1277L,
+      school_short == "Beaumont"                     ~ 831L,
+      str_detect(school_short, "Tabor")              ~ 877L,
+      school_short == "César Chávez"                 ~ 841L,
+      school_short == "Lane"                         ~ 1243L,
+      school_short == "da Vinci"                     ~ 1363L,
+      school_short == "Gray"                         ~ 852L,
+      school_short == "Ockley Green"                 ~ 878L,
+      school_short == "Harriet Tubman"               ~ 894L,
+      school_short == "Kellogg"                      ~ 863L,
+      school_short == "Hosford"                      ~ 858L,
+      school_short == "Sellwood"                     ~ 888L,
+      school_short == "West Sylvan"                  ~ 898L,
+      school_short == "Benson"                       ~ 906L,
+      school_short == "Roosevelt"                    ~ 918L,
+      school_short == "Cleveland"                    ~ 909L,
+      school_short %in% c("Ida B. Wells", "Wilson",
+                          'Ida B. Wells-Barnett')  ~ 922L,
+      school_short %in%  c("McDaniel","Leodis V. McDaniel")  ~ 915L,
+      school_short == "Lincoln" ~ 914L,
+      school_short == "Franklin" ~ 911L,
+      school_short == "Grant" ~ 912L,
+      str_detect(school_short, "Bridger")   ~ 834L,
+      school_short %in% c('Creative Science') ~ 4640L,
+      str_detect(school_short, 'NAYA') ~ 4587,
+      str_detect(school_short, 'Le Monde') ~ 5060,
+      str_detect(school_short, 'Portland Village') ~ 4534,
+      str_detect(school_short, 'Trillium') ~ 3616,
+      str_detect(school_short, 'Opal') ~ 3451,
+      str_detect(school_short, 'Madison') ~ 915,
+      str_detect(school_short, 'Emerson') ~ 3991,
+      str_detect(school_short, 'Rosemary Anderson') ~ 5877,
+      str_detect(school_short, 'Mt Scott') ~ 1803,
+      .default = school_id
+    ),
+    district_id   = "2180",
+    district_name = "Portland SD 1J",
+    school_id     = as.character(school_id),
+    lep = coalesce(lep,lep2),
+  ) %>%
+  relocate(c(school_year,district_id, district_name,school_id, school_name), .before = school_short) %>%
+  select(-school_name,-lep2) %>%
+  mutate(across(c(all, combined_underserved:multi), as.numeric)) %>%
+  mutate(across(c(combined_underserved:multi),
+                list(pct = ~round(100 * (.x / all), 1)),
+                .names = "pct_{.col}")) %>%
+  mutate(pct_all = 100) %>%  # temp rename so all columns share the pct_/raw_ pattern
+  pivot_longer(
+    cols      = c(all, combined_underserved:multi, starts_with("pct_")),
+    names_to  = c("student_group")
+  ) %>%
+  mutate(var = ifelse(str_detect(student_group,'pct_'), 'pct','ct'),
+         student_group = gsub("pct_","",student_group)) %>%
+  pivot_wider(names_from = var)
+
+write_csv(enroll_pps_group, 'prc/enroll-pps.csv')
+
+## combine ####
 enroll <- enroll_combined %>%
   filter(!value %in% c("-","*")) %>%
   mutate(
@@ -199,7 +376,7 @@ enroll <- enroll_combined %>%
     str_detect(source_file,'20222023') ~ 2023,
     str_detect(source_file,'20232024') ~ 2024,
     str_detect(source_file,'20242025') ~ 2025,
-    str_detect(source_file,'20252026') ~ 2026
+    str_detect(source_file,'20252026') ~ 202
   ),
   report_year = case_when(
     str_detect(variable,'2017_18') ~ 2018,
@@ -339,7 +516,8 @@ enroll <- enroll_combined %>%
   mutate(district_id = ifelse(is.na(district_id) & level == 'district', school_id,district_id),
          district_name = ifelse(is.na(district_name) & level == 'district', school_name,district_name)) %>%
   select(-reported_spring_pct,-reported_fall_pct) %>%
-  distinct()
+  distinct() %>%
+  left_join(enroll_pps, by = c('school_year','district_id','district_name','school_id', 'student_group', 'level', 'grade'))
 
 write_csv(enroll, 'prc/enroll.csv', na = '')
 
