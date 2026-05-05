@@ -1110,5 +1110,132 @@ attend_sw_plt
 ggsave(plot = attend_sw_plt, file = 'prc/attend-sw-plt.png',
        width = 8, height = 5.5, units = 'in', dpi = 800)
 
+# pps-info metrics ####
+
+pps_info <- read_csv('raw/pps-info/pps_schools_2026-04-29.csv') %>%
+  mutate(school_short = gsub(' Elementary School| Program \\(K-8\\)', '', school_name))
+
+sw_pps_info <- pps_info %>%
+  filter(ode_school_id %in% sw_pps_elem)
+
+## seismic ####
+
+sw_seismic_order <- sw_pps_info %>%
+  arrange(retrofit_cost_remaining_usd) %>%
+  pull(school_short)
+
+sw_seismic <- sw_pps_info %>%
+  mutate(
+    shade        = case_when(ode_school_id == 1299 ~ '1', TRUE ~ '2'),
+    school_short = factor(school_short, levels = sw_seismic_order)
+  )
+
+seismic_sw_plt <- ggplot(sw_seismic, aes(retrofit_cost_remaining_usd, school_short)) +
+  geom_col(aes(fill = shade), width = 0.65) +
+  geom_text(
+    aes(x     = retrofit_cost_remaining_usd - 150000,
+        label = paste0('$', format(round(retrofit_cost_remaining_usd / 1e6, 1), nsmall = 1), 'M')),
+    color = 'white', hjust = 1, size = 3.5
+  ) +
+  scale_fill_manual(values = c('1' = '#1B2A4A', '2' = '#A8C4E0')) +
+  scale_x_continuous(
+    expand = expansion(mult = c(0, 0.05)),
+    labels = \(x) paste0('$', x / 1e6, 'M')
+  ) +
+  labs(
+    title    = 'SW Portland Elementary Seismic Retrofit Cost',
+    subtitle = 'Remaining retrofit cost (USD)',
+    x = '', y = ''
+  ) +
+  theme_ipsum_pub(grid = FALSE) +
+  theme(legend.position = 'none', axis.text.x = element_blank())
+
+seismic_sw_plt
+
+ggsave(plot = seismic_sw_plt, file = 'prc/seismic-sw-plt.png',
+       width = 8, height = 5.5, units = 'in', dpi = 800)
+
+
+## neighborhood ####
+
+sw_neighbor <- sw_pps_info %>%
+  mutate(
+    pct_neighborhood = case_when(
+      has_dli == TRUE  ~ 100 * neighborhood_students_2526 / enrollment_2025_26,
+      TRUE             ~ 100
+    ),
+    shade        = case_when(ode_school_id == 1299 ~ '1', TRUE ~ '2')
+  ) %>%
+  arrange(pct_neighborhood) %>%
+  mutate(school_short = factor(school_short, levels = school_short))
+
+neighbor_sw_plt <- ggplot(sw_neighbor, aes(pct_neighborhood, school_short)) +
+  geom_col(aes(fill = shade), width = 0.65) +
+  geom_text(
+    aes(x = pct_neighborhood - 2, label = paste0(round(pct_neighborhood), '%')),
+    color = 'white', hjust = 1, size = 3.5
+  ) +
+  scale_fill_manual(values = c('1' = '#1B2A4A', '2' = '#A8C4E0')) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05))) +
+  labs(
+    title    = 'SW Portland Elementary Neighborhood Students',
+    subtitle = 'Fall 2025-26 percent of students assigned to school boundary',
+    x = '', y = ''
+  ) +
+  theme_ipsum_pub(grid = FALSE) +
+  theme(legend.position = 'none', axis.text.x = element_blank())
+
+neighbor_sw_plt
+
+ggsave(plot = neighbor_sw_plt, file = 'prc/neighbor-sw-plt.png',
+       width = 8, height = 5.5, units = 'in', dpi = 800)
+
+
+## distance traveled ####
+
+closure_distance <- pps_info %>%
+  filter(is_closure_candidate == TRUE) %>%
+  mutate(
+    shade = case_when(ode_school_id == 1299 ~ '1', TRUE ~ '2')
+  ) %>%
+  arrange(nearest_alt_school_mi) %>%
+  mutate(rank = row_number())
+
+distance_rank_plt <- ggplot(closure_distance, aes(nearest_alt_school_mi, rank)) +
+  geom_point(aes(color = shade, size = shade)) +
+  geom_text_repel(
+    data               = \(x) filter(x, shade == '1'),
+    aes(label          = paste0(school_short, ': ', nearest_alt_school_mi, ' mi'),
+        color          = shade),
+    hjust              = 0,
+    nudge_x            = 0.15,
+    direction          = 'y',
+    segment.color      = 'gray70',
+    segment.alpha      = 0.5,
+    size               = 2.8,
+    min.segment.length = 0
+  ) +
+  scale_color_manual(values = c('1' = '#1B2A4A', '2' = '#B4B2A9')) +
+  scale_size_manual(values  = c('1' = 4,          '2' = 2)) +
+  scale_x_continuous(
+    expand = expansion(mult = c(0.02, 0.35)),
+    labels = \(x) paste0(x, ' mi')
+  ) +
+  scale_y_continuous(breaks = NULL) +
+  labs(
+    title    = 'Distance to Nearest Alternative School',
+    subtitle = 'Miles to nearest alternative school for 2025-26 PPS closure candidates',
+    x        = 'Miles to Nearest Alternative School',
+    y        = ''
+  ) +
+  theme_ipsum_pub(grid = FALSE) +
+  theme(legend.position = 'none', axis.text.y = element_blank())
+
+distance_rank_plt
+
+ggsave(plot = distance_rank_plt, file = 'prc/distance-rank-plt.png',
+       width = 8, height = 6, units = 'in', dpi = 800)
+
+
 # map ####
 
