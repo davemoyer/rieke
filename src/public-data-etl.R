@@ -184,7 +184,7 @@ enroll_combined <- enroll_raw %>%
   relocate(c(school_id, school_name), .after = district_name)
 
 ## pps ####
-enroll_pps_raw <- read_excel('raw/enroll/SchoolProfiles-October_2025_Enrollment_Summary10yrdetail.xlsx',
+enroll_pps_raw <- read_excel('raw/enroll-pps/SchoolProfiles-October_2025_Enrollment_Summary10yrdetail.xlsx',
                              range = "A2:M144", col_types = 'text')
 
 enroll_pps <- enroll_pps_raw %>%
@@ -246,6 +246,63 @@ enroll_pps <- enroll_pps_raw %>%
 enroll_pps_group_files <- list.files("raw/enroll-pps", 
                                      pattern = "(nderserv).*\\.xlsx?$",
                                      full.names = TRUE)
+
+enroll_pps_district_raw <- lapply(enroll_pps_group_files, function(f) {
+  read_excel(f) %>%
+    clean_names() %>%
+    rename(school_short = x1) %>%
+    filter(!is.na(school_short) & school_short != 'Name' & !is.na(enroll) & 
+             str_detect(school_short, 'Total'))
+}) %>%
+  setNames(enroll_pps_group_files) %>%
+  bind_rows(.id = 'src') %>%
+  filter(school_short %in% c('District Total','Elementary Schools Total','Schools and PPS Alt. Programs Total'))
+
+enroll_pps_district <- enroll_pps_district_raw %>%
+  select(
+    src,
+    school_short,
+    all = enroll,
+    combined_underserved,
+    direct_cert          = direct_certification,
+    lep,
+    lep2 = multilingual_learner_lep,
+    sped                 = sp_ed,
+    historically_underserved,
+    latino,
+    black,
+    multi                = multi_race
+  ) %>%
+  mutate(
+    school_year = case_when(
+      str_detect(src, "\\d{2}-\\d{2}\\.xlsx") ~
+        2000L + as.integer(str_extract(src, "(?<=-)\\d{2}(?=\\.xlsx)")),
+      str_detect(src, "oct25") ~ 2025L,
+      TRUE ~ 2000L + as.integer(str_extract(src, "\\d{2}(?=\\.xlsx)"))
+    ),
+    school_short = ifelse(str_detect(school_short,'Schools and PPS'),'District Total',school_short),
+    lep = coalesce(lep,lep2)
+  ) %>%
+  select(-src,-lep2) %>%
+  mutate(across(c(all, combined_underserved:multi), as.numeric)) %>%
+  mutate(across(c(combined_underserved:multi),
+                list(pct = ~round(100 * (.x / all), 1)),
+                .names = "pct_{.col}")) %>%
+  mutate(pct_all = 100) %>%  # temp rename so all columns share the pct_/raw_ pattern
+  pivot_longer(
+    cols      = c(all, combined_underserved:multi, starts_with("pct_")),
+    names_to  = c("student_group")
+  ) %>%
+  mutate(var = ifelse(str_detect(student_group,'pct_'), 'pct','ct'),
+         student_group = gsub("pct_","",student_group),
+         student_group = case_when(
+           student_group == 'latino' ~ 'hispanic',
+           student_group == 'sped' ~ 'swd',
+           T ~ student_group
+         )) %>%
+  pivot_wider(names_from = var)
+
+write_csv(enroll_pps_district, 'prc/enroll-pps-district.csv')
 
 enroll_pps_group_raw <- lapply(enroll_pps_group_files, function(f) {
   read_excel(f) %>%
@@ -354,12 +411,26 @@ enroll_pps_group <- enroll_pps_group_raw %>%
     names_to  = c("student_group")
   ) %>%
   mutate(var = ifelse(str_detect(student_group,'pct_'), 'pct','ct'),
-         student_group = gsub("pct_","",student_group)) %>%
+         student_group = gsub("pct_","",student_group),
+         student_group = case_when(
+           student_group == 'latino' ~ 'hispanic',
+           student_group == 'sped' ~ 'swd',
+           T ~ student_group
+         )) %>%
   pivot_wider(names_from = var)
 
 write_csv(enroll_pps_group, 'prc/enroll-pps.csv')
 
 ## combine ####
+enroll_pps_for_join <- enroll_pps_group %>%
+  rename(fall_ct_pps = ct,
+         fall_pct_pps = pct) %>%
+  mutate(level = 'school',
+         grade = 'all') %>%
+  filter(!is.na(school_id)) %>%
+  select(-school_short)
+  
+
 enroll <- enroll_combined %>%
   filter(!value %in% c("-","*")) %>%
   mutate(
@@ -376,7 +447,7 @@ enroll <- enroll_combined %>%
     str_detect(source_file,'20222023') ~ 2023,
     str_detect(source_file,'20232024') ~ 2024,
     str_detect(source_file,'20242025') ~ 2025,
-    str_detect(source_file,'20252026') ~ 202
+    str_detect(source_file,'20252026') ~ 2026
   ),
   report_year = case_when(
     str_detect(variable,'2017_18') ~ 2018,
@@ -517,7 +588,7 @@ enroll <- enroll_combined %>%
          district_name = ifelse(is.na(district_name) & level == 'district', school_name,district_name)) %>%
   select(-reported_spring_pct,-reported_fall_pct) %>%
   distinct() %>%
-  left_join(enroll_pps, by = c('school_year','district_id','district_name','school_id', 'student_group', 'level', 'grade'))
+  full_join(enroll_pps_for_join, by = c('school_year','district_id','district_name','school_id', 'student_group', 'level', 'grade'))
 
 write_csv(enroll, 'prc/enroll.csv', na = '')
 

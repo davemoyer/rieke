@@ -12,7 +12,7 @@ library(ggrepel)
 library(janitor)
 library(here)
 
-# data 
+# data ####
 
 directory <- read_csv('prc/directory.csv')
 
@@ -20,7 +20,9 @@ dir <- directory %>%
   select(-school_name,-district_name) %>%
   mutate(district_id = as.numeric(district_id))
 
-grades_served <- read_csv('prc/grades-served.csv')
+grades_served <- read_csv('prc/grades-served.csv') %>%
+  mutate(grades_served = ifelse(str_detect(school_name, 'Hayhurst'), 'K-5',grades_served),
+         school_level =  ifelse(str_detect(school_name, 'Hayhurst'), 'ES',school_level)) # fix Hayhurst
 
 enroll <- read_csv('prc/enroll.csv')
 analysis <- read_csv('prc/attend_tests_funding.csv')
@@ -29,7 +31,18 @@ tests_long <- read_csv('prc/full_tests.csv') %>%
 
 full_enroll <- enroll %>%
   filter(level == 'school') %>%
-  left_join(dir, by = c('district_id','school_id'))
+  left_join(dir, by = c('district_id','school_id')) %>%
+  distinct()
+
+enroll_pps <- read_csv('prc/enroll-pps.csv')
+enroll_pps_district <- read_csv('prc/enroll-pps-district.csv')
+
+enroll_pps_adjusted <- enroll_pps %>%
+  mutate(ct = case_when(
+    school_short == 'Hayhurst' & student_group == 'all' & school_year == 2019 ~ 390,
+    school_short == 'Hayhurst' & student_group == 'all' & school_year == 2020 ~ 396,
+    T ~ ct
+  ))
 
 sw_pps_elem <- c(823,  #Ainsworth
                  835,  #Bridlemile
@@ -65,44 +78,31 @@ rieke_colors <- c(
   gray   = "#B4B2A9"
 )
 
-
 # enrollment change ####
-district_enroll_all <- enroll %>%
-  filter(str_detect(district_name, 'Portland|Beaverton') & level == 'district') %>%
-  filter(grade == 'all' & student_group == 'all') %>%
-  select(district_id:school_year,fall_ct, spring_ct)
 
-sw_elem_enroll_all <- full_enroll %>%
+sw_elem_enroll_all <- enroll_pps_adjusted %>%
   filter((school_id %in% sw_pps_elem) & 
-           grade == 'all' & student_group == 'all') %>%
-  select(district_id:school_year, fall_ct, spring_ct) %>%
-  mutate(
-    shade = case_when(
-      district_name == 'Beaverton SD 48J'          ~ '3',
-      school_name   == 'Rieke Elementary School'   ~ '1',
-      district_name == 'Portland SD 1J'            ~ '2'
-    ),
-    school_name = gsub(' Elementary School', '', school_name)
-  ) 
+           student_group == 'all') %>%
+  mutate(shade = ifelse(school_short == 'Rieke', "1","2"))
 
 enroll_change <- sw_elem_enroll_all %>%
   filter(school_year %in% c(2019,2026)) %>%
   arrange(school_id,school_year) %>%
   group_by(school_id) %>%
-  mutate(enroll_change = fall_ct-lag(fall_ct),
-         enroll_change_pct = 100*(fall_ct-lag(fall_ct))/lag(fall_ct)) %>%
+  mutate(enroll_change = ct-lag(ct),
+         enroll_change_pct = 100*(ct-lag(ct))/lag(ct)) %>%
   select(school_id,school_year,enroll_change,enroll_change_pct) %>%
   filter(school_year == 2026)
 
 sw_elem_enroll_all_with_change <- sw_elem_enroll_all %>%
   left_join(enroll_change, by = c('school_id','school_year'))
 
-enroll_change_plt <- ggplot(sw_elem_enroll_all_with_change, aes(school_year, fall_ct, group = school_id)) +
+enroll_change_plt <- ggplot(sw_elem_enroll_all_with_change, aes(school_year, ct, group = school_id)) +
   geom_line(aes(color = shade)) +
   geom_point(aes(color = shade)) +
   geom_text_repel(
     data        = \(x) slice_max(x, school_year, n = 1, by = school_id),
-    aes(label   = paste0(school_name, ": ", fall_ct, ' (',round(enroll_change_pct),'%)'), color = shade),
+    aes(label   = paste0(school_short, ": ", ct, ' (',round(enroll_change_pct),'%)'), color = shade),
     hjust       = 0,
     nudge_x     = 0.2,
     direction   = "y",
@@ -110,7 +110,7 @@ enroll_change_plt <- ggplot(sw_elem_enroll_all_with_change, aes(school_year, fal
   ) +
   geom_text_repel(
     data        = \(x) slice_min(x, school_year, n = 1, by = school_id),
-    aes(label   = fall_ct, color = shade),
+    aes(label   = ct, color = shade),
     hjust       = 1,
     nudge_x     = -0.2,
     direction   = "y",
@@ -124,7 +124,7 @@ enroll_change_plt <- ggplot(sw_elem_enroll_all_with_change, aes(school_year, fal
   scale_x_continuous(limits = c(2018.75,2028),
                      breaks = 2019:2026,
                      labels = 2019:2026) +
-  ylim(240,630) +
+  ylim(240,650) +
   labs(x = "",
        y = "",
        title = 'SW Portland Elementary School Enrollment',
@@ -146,75 +146,75 @@ ggsave(
   
 
 # enrollment breakdown ####
-district_enroll_group <- enroll %>%
-  filter(student_group %in% c('asian','hispanic','white','black','dis','swd') &
-           district_name == 'Portland SD 1J' & grade == 'all' & school_year == 2025 & level == 'district') %>%
-  select(district_id:school_year,student_group,spring_pct) %>%
-  mutate(school_name = 'PPS')
+district_enroll_group <- enroll_pps_district %>%
+  filter(student_group %in% c('hispanic','black','historically_underserved','swd') &
+           school_year == 2026) %>%
+  select(school_year,school_short,student_group,pct) %>%
+  mutate(school_name = case_when(
+    school_short == 'District Total' ~ 'PPS',
+    school_short == 'Elementary Schools Total' ~ 'All PPS Elem.'
+  ),
+  student_group = case_when(
+    student_group == 'swd' ~ 'Students with Disabilities',
+    student_group == 'historically_underserved' ~ 'Historically Underserved',
+    T ~ str_to_title(student_group)))
 
-sw_pps_enroll_group <- full_enroll %>%
-    filter(school_id %in% sw_pps_elem & school_year == 2025 & grade == 'all' & 
-             student_group %in% c('all','asian','hispanic','white','black','dis','swd')) %>%
+sw_pps_enroll_group <- enroll_pps_adjusted %>%
+    filter(school_id %in% sw_pps_elem & school_year == 2026  & 
+             student_group %in% c('all','hispanic','black','historically_underserved','swd')) %>%
     filter(school_id != 1299) %>% # pull out Rieke
-    select(district_id:school_year,student_group,spring_ct) %>%
-    pivot_wider(names_from = student_group, values_from = spring_ct) %>%
-    summarise(across(c(all:dis), ~sum(.x))) %>%
-  mutate(across(c(asian:dis), ~round(100*(.x/all)))) %>%
-  pivot_longer(c(asian:dis), names_to = 'student_group',values_to = 'spring_pct') %>%
-  mutate(school_name = 'Other SW Elem') %>%
+    select(school_year,school_id,student_group,ct) %>%
+    pivot_wider(names_from = student_group, values_from = ct) %>%
+    summarise(across(c(all:black), ~sum(.x))) %>%
+  mutate(across(c(swd:black), ~round(100*(.x/all)))) %>%
+  pivot_longer(c(swd:black), names_to = 'student_group',values_to = 'pct') %>%
+  mutate(school_name = 'Other SW Elem',
+         student_group = case_when(
+           student_group == 'swd' ~ 'Students with Disabilities',
+           student_group == 'historically_underserved' ~ 'Historically Underserved',
+           T ~ str_to_title(student_group)
+         )) %>%
   select(-all)
 
-rieke_enroll_group <- full_enroll %>%
-  filter(school_id == 1299 & school_year == 2025 & grade == 'all' & 
-           student_group %in% c('asian','hispanic','white','black','dis','swd')) %>%
-  select(school_name,student_group,spring_pct) %>%
+rieke_enroll_group <- enroll_pps_adjusted %>%
+  filter(school_id == 1299 & school_year == 2026 &
+           student_group %in% c('hispanic','black','historically_underserved','swd')) %>%
+  select(student_group,pct) %>%
   mutate(school_name = 'Rieke',
          student_group = case_when(
            student_group == 'swd' ~ 'Students with Disabilities',
-           student_group == 'dis' ~ 'Economically Disadvantaged',
+           student_group == 'historically_underserved' ~ 'Historically Underserved',
            T ~ str_to_title(student_group)
-         ),
-         student_group = factor(student_group, levels = c('Asian',
-                                                          'Black',
-                                                          'Hispanic',
-                                                          'White',
-                                                          'Economically Disadvantaged',
-                                                          'Students with Disabilities'))
+         )
          )
   
 ref_enroll_group <- bind_rows(sw_pps_enroll_group,district_enroll_group) %>%
-  select(school_name,student_group,spring_pct) %>%
-  mutate(student_group = case_when(
-    student_group == 'swd' ~ 'Students with Disabilities',
-    student_group == 'dis' ~ 'Economically Disadvantaged',
-    T ~ str_to_title(student_group)
-  ),
-  student_group = factor(student_group, levels = c('Asian',
-                                                   'Black',
+  select(school_name,student_group,pct) %>%
+  mutate(
+  student_group = factor(student_group, levels = c('Black',
                                                    'Hispanic',
-                                                   'White',
-                                                   'Economically Disadvantaged',
+                                                   'Historically Underserved',
                                                    'Students with Disabilities')))
 
-enroll_group_plt <- ggplot(rieke_enroll_group, aes(spring_pct, student_group)) +
+enroll_group_plt <- ggplot(rieke_enroll_group, aes(pct, student_group)) +
   geom_col(fill = "#1D9E75", width = 0.6) +
   geom_errorbar(
     data     = ref_enroll_group,
-    aes(x    = spring_pct,
-        xmin = spring_pct,
-        xmax = spring_pct,
+    aes(x    = pct,
+        xmin = pct,
+        xmax = pct,
         color = school_name),
     width     = 0.6,
     linewidth = 0.9
   ) +
-  geom_text(aes(x = ifelse(spring_pct >=10, spring_pct-3,2), label = paste0(spring_pct,'%')),
+  geom_text(aes(x = ifelse(pct >=10, pct-3,2), label = paste0(pct,'%')),
             color = 'white') +
   scale_color_manual(values = c(
     "Other SW Elem" = "black",
     "PPS"   = "grey"
   )) +
   labs(
-    title = 'Spring 2025 Enrollment by Student Group'
+    title = 'Fall 2026 Enrollment by Student Group'
   ) +
   theme_ipsum_pub(grid = F) +
   theme(
@@ -237,14 +237,15 @@ ggsave(
 
 
 combined_enroll_group <- bind_rows(rieke_enroll_group,ref_enroll_group) %>%
-  mutate(school_name = factor(school_name, levels = c('PPS','Other SW Elem','Rieke')))
+  mutate(school_name = factor(school_name, levels = c('PPS',"All PPS Elem.",'Other SW Elem','Rieke'))) %>%
+  filter(school_name != 'All PPS Elem.')
 
 enroll_group_grouped_plt <- ggplot(
   combined_enroll_group,
-  aes(spring_pct, student_group, fill = school_name)) +
+  aes(pct, student_group, fill = school_name)) +
   geom_col(position = position_dodge(width = 0.8), width = 0.7) +
   geom_text(
-    aes(x = spring_pct + 2, label = paste0(spring_pct, "%"), color = school_name),
+    aes(x = pct + 2, label = paste0(round(pct), "%"), color = school_name),
     position = position_dodge(width = 0.8),
     hjust    = 0,
     size     = 4
@@ -262,7 +263,7 @@ enroll_group_grouped_plt <- ggplot(
   scale_x_continuous(
     expand = expansion(mult = c(0, 0.2))
   ) +
-  labs(title = "Spring 2025 Enrollment by Student Group") +
+  labs(title = "Fall 2026 Enrollment by Student Group") +
   theme_ipsum_pub(grid = F) +
   theme(
     legend.position  = "bottom",
@@ -476,14 +477,16 @@ prof_rank_pps_ela <- ggplot(
     aes(label = school_short, color = shade, y = 0),
     hjust    = 1,
     nudge_y  = -1,
-    fontface = "bold"
+    fontface = 'bold',
+    size = 3.5
   ) +
   geom_text(
     data     = \(x) filter(x, shade %in% c("1", "2")),
     aes(label = paste0(round(pct_proficient,1), "%"), color = shade),
     hjust    = 0,
     nudge_y  = 1,
-    fontface = "bold"
+    fontface = 'bold',
+    size = 3
   ) +
   coord_flip() +
   scale_fill_manual(values  = c("1" = "#1B2A4A", "2" = "#A8C4E0", "3" = "#B4B2A9")) +
@@ -491,8 +494,8 @@ prof_rank_pps_ela <- ggplot(
   scale_y_continuous(limits = c(-25, 100)) +
   facet_wrap(~subject_label) +
   labs(
-    title    = "Rieke was the top PPS elementary school in 2024-2025",
-    subtitle = "2024-25 proficiency on Oregon state assessments",
+    #title    = "Rieke was the top PPS elementary school in 2024-2025",
+    #subtitle = "2024-25 proficiency on Oregon state assessments",
     y        = "% Proficient (Levels 3 & 4)",
     x        = ""
   ) +
@@ -504,6 +507,65 @@ prof_rank_pps_ela <- ggplot(
     strip.text       = element_text(hjust = 0.5)
   )
 prof_rank_pps_ela
+
+ggsave(
+  plot   = prof_rank_pps_ela,
+  file   = 'prc/prof-bar-pps-ela.png',
+  width  = 6,
+  height = 7,
+  units  = 'in',
+  dpi    = 800
+)
+
+prof_rank_pps_math <- ggplot(
+  pps_rank_2025 |> filter(subject == "math") |> mutate(school_short = reorder(school_short, pct_proficient)),
+  aes(school_short, pct_proficient)
+) +
+  geom_col(aes(fill = shade)) +
+  geom_text(
+    data     = \(x) filter(x, shade %in% c("1", "2")),
+    aes(label = school_short, color = shade, y = 0),
+    hjust    = 1,
+    nudge_y  = -1,
+    fontface = 'bold',
+    size = 3.5
+  ) +
+  geom_text(
+    data     = \(x) filter(x, shade %in% c("1", "2")),
+    aes(label = paste0(round(pct_proficient,1), "%"), color = shade),
+    hjust    = 0,
+    nudge_y  = 1,
+    fontface = 'bold',
+    size = 3
+  ) +
+  coord_flip() +
+  scale_fill_manual(values  = c("1" = "#1B2A4A", "2" = "#A8C4E0", "3" = "#B4B2A9")) +
+  scale_color_manual(values = c("1" = "#1B2A4A", "2" = "#A8C4E0", "3" = "#B4B2A9")) +
+  scale_y_continuous(limits = c(-25, 100)) +
+  facet_wrap(~subject_label) +
+  labs(
+    #title    = "Rieke was the top PPS elementary school in 2024-2025",
+    #subtitle = "2024-25 proficiency on Oregon state assessments",
+    y        = "% Proficient (Levels 3 & 4)",
+    x        = ""
+  ) +
+  theme_ipsum_pub(grid = FALSE) +
+  theme(
+    legend.position  = "none",
+    axis.text.y      = element_blank(),
+    axis.title.y     = element_text(hjust = 0.5),
+    strip.text       = element_text(hjust = 0.5)
+  )
+prof_rank_pps_math
+
+ggsave(
+  plot   = prof_rank_pps_math,
+  file   = 'prc/prof-bar-pps-math.png',
+  width  = 6,
+  height = 7,
+  units  = 'in',
+  dpi    = 800
+)
 
 ## state elem rank ####
 state_rank_2025 <- state_elem_prof %>%
@@ -1047,3 +1109,6 @@ attend_sw_plt
 
 ggsave(plot = attend_sw_plt, file = 'prc/attend-sw-plt.png',
        width = 8, height = 5.5, units = 'in', dpi = 800)
+
+# map ####
+
