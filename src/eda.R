@@ -9,6 +9,7 @@ library(sf)
 library(googlesheets4)
 library(hrbrthemes)
 library(ggrepel)
+library(tidycensus)
 library(janitor)
 library(here)
 
@@ -17,7 +18,7 @@ library(here)
 directory <- read_csv('prc/directory.csv')
 
 dir <- directory %>%
-  select(-school_name,-district_name) %>%
+  select(-district_name) %>%
   mutate(district_id = as.numeric(district_id))
 
 grades_served <- read_csv('prc/grades-served.csv') %>%
@@ -1118,47 +1119,66 @@ pps_info <- read_csv('raw/pps-info/pps_schools_2026-04-29.csv') %>%
 sw_pps_info <- pps_info %>%
   filter(ode_school_id %in% sw_pps_elem)
 
+elem_pps_info <- pps_info %>%
+  filter(level %in% c('elementary','k8'))
+
 ## seismic ####
 
-sw_seismic_order <- sw_pps_info %>%
-  arrange(retrofit_cost_remaining_usd) %>%
-  pull(school_short)
-
-sw_seismic <- sw_pps_info %>%
+sw_seismic <- elem_pps_info %>%
   mutate(
-    shade        = case_when(ode_school_id == 1299 ~ '1', TRUE ~ '2'),
-    school_short = factor(school_short, levels = sw_seismic_order)
-  )
+    shade = case_when(ode_school_id == 1299 ~ '1', 
+                             ode_school_id %in% sw_pps_elem ~ '2',
+                             T ~ '3')) %>%
+  filter(!is.na(retrofit_cost_remaining_usd))
 
-seismic_sw_plt <- ggplot(sw_seismic, aes(retrofit_cost_remaining_usd, school_short)) +
-  geom_col(aes(fill = shade), width = 0.65) +
-  geom_text(
-    aes(x     = retrofit_cost_remaining_usd - 150000,
-        label = paste0('$', format(round(retrofit_cost_remaining_usd / 1e6, 1), nsmall = 1), 'M')),
-    color = 'white', hjust = 1, size = 3.5
+seismic_sw_plt <- ggplot(sw_seismic, aes(retrofit_cost_remaining_usd, reorder(school_short,retrofit_cost_remaining_usd))) +
+  geom_col(
+    aes(
+      fill   = shade,
+      color  = seismic_retrofit_status %in% c('planned_targeted', 'full', 'planned_full'),
+      linewidth = seismic_retrofit_status %in% c('planned_targeted', 'full', 'planned_full')
+    ),
+    width = 0.85
   ) +
-  scale_fill_manual(values = c('1' = '#1B2A4A', '2' = '#A8C4E0')) +
+  geom_text(
+    aes(
+      x     = retrofit_cost_remaining_usd + 600000,
+      label = paste0(
+        '$', format(round(retrofit_cost_remaining_usd / 1e6, 1), nsmall = 1), 'M',
+        ifelse(seismic_retrofit_status %in% c('planned_targeted', 'full', 'planned_full'), '*', '')
+      ),
+      fontface = ifelse(shade != '1', 'plain', 'bold')
+    ),
+    size = 2.5
+  ) +
+  scale_fill_manual(values = c('1' = '#1B2A4A', '2' = '#A8C4E0', '3' = '#B4B2A9')) +
+  scale_color_manual(values = c('TRUE' = 'orange', 'FALSE' = NA)) +
+  scale_linewidth_manual(values = c('TRUE' = 1.0, 'FALSE' = 0)) +
   scale_x_continuous(
     expand = expansion(mult = c(0, 0.05)),
     labels = \(x) paste0('$', x / 1e6, 'M')
   ) +
   labs(
-    title    = 'SW Portland Elementary Seismic Retrofit Cost',
-    subtitle = 'Remaining retrofit cost (USD)',
+    title    = 'Portland Elementary Seismic Retrofit Cost',
+    subtitle = 'Remaining retrofit cost (USD). Retrofit planned or completed in orange.',
     x = '', y = ''
   ) +
   theme_ipsum_pub(grid = FALSE) +
-  theme(legend.position = 'none', axis.text.x = element_blank())
+  theme(legend.position = 'none', 
+        axis.text.x = element_blank(),
+        axis.text.y = element_text(size = rel(0.9), vjust = 0.5, lineheight = 0.85))
 
 seismic_sw_plt
 
-ggsave(plot = seismic_sw_plt, file = 'prc/seismic-sw-plt.png',
-       width = 8, height = 5.5, units = 'in', dpi = 800)
+ggsave(plot = seismic_sw_plt, 
+       file = 'prc/seismic-sw-plt.png',
+       width = 11, height = 8, 
+       units = 'in', dpi = 800)
 
 
 ## neighborhood ####
 
-sw_neighbor <- sw_pps_info %>%
+sw_neighbor <- elem_pps_info %>%
   mutate(
     pct_neighborhood = case_when(
       has_dli == TRUE  ~ 100 * neighborhood_students_2526 / enrollment_2025_26,
@@ -1193,8 +1213,7 @@ ggsave(plot = neighbor_sw_plt, file = 'prc/neighbor-sw-plt.png',
 
 ## distance traveled ####
 
-closure_distance <- pps_info %>%
-  filter(is_closure_candidate == TRUE) %>%
+closure_distance <- elem_pps_info %>%
   mutate(
     shade = case_when(ode_school_id == 1299 ~ '1', TRUE ~ '2')
   ) %>%
@@ -1202,25 +1221,25 @@ closure_distance <- pps_info %>%
   mutate(rank = row_number())
 
 distance_rank_plt <- ggplot(closure_distance, aes(nearest_alt_school_mi, rank)) +
-  geom_point(aes(color = shade, size = shade)) +
-  geom_text_repel(
-    data               = \(x) filter(x, shade == '1'),
-    aes(label          = paste0(school_short, ': ', nearest_alt_school_mi, ' mi'),
-        color          = shade),
-    hjust              = 0,
-    nudge_x            = 0.15,
-    direction          = 'y',
-    segment.color      = 'gray70',
-    segment.alpha      = 0.5,
-    size               = 2.8,
-    min.segment.length = 0
-  ) +
-  scale_color_manual(values = c('1' = '#1B2A4A', '2' = '#B4B2A9')) +
-  scale_size_manual(values  = c('1' = 4,          '2' = 2)) +
-  scale_x_continuous(
-    expand = expansion(mult = c(0.02, 0.35)),
-    labels = \(x) paste0(x, ' mi')
-  ) +
+  geom_col(aes(color = shade, size = shade)) +
+  # geom_text_repel(
+  #   data               = \(x) filter(x, shade == '1'),
+  #   aes(label          = paste0(school_short, ': ', nearest_alt_school_mi, ' mi'),
+  #       color          = shade),
+  #   hjust              = 0,
+  #   nudge_x            = 0.15,
+  #   direction          = 'y',
+  #   segment.color      = 'gray70',
+  #   segment.alpha      = 0.5,
+  #   size               = 2.8,
+  #   min.segment.length = 0
+  # ) +
+  # scale_color_manual(values = c('1' = '#1B2A4A', '2' = '#B4B2A9')) +
+  # scale_size_manual(values  = c('1' = 4,          '2' = 2)) +
+  # scale_x_continuous(
+  #   expand = expansion(mult = c(0.02, 0.35)),
+  #   labels = \(x) paste0(x, ' mi')
+  # ) +
   scale_y_continuous(breaks = NULL) +
   labs(
     title    = 'Distance to Nearest Alternative School',
@@ -1236,6 +1255,226 @@ distance_rank_plt
 ggsave(plot = distance_rank_plt, file = 'prc/distance-rank-plt.png',
        width = 8, height = 6, units = 'in', dpi = 800)
 
+## new housing ####
+
+new_housing <- elem_pps_info %>%
+  filter(level %in% c('elementary','k8')) %>%
+  mutate(
+    shade = case_when(ode_school_id == 1299 ~ '1', ode_school_id %in% sw_pps_elem ~ '2', T ~ '3')) %>%
+  arrange(desc(bli_forecast_units_within_catchment)) %>%
+  mutate(rank = row_number())
+
+
+new_housing_plt <- ggplot(new_housing, aes(bli_forecast_units_within_catchment, reorder(school_short,bli_forecast_units_within_catchment))) +
+  geom_col(
+    aes(
+      fill   = shade
+    ),
+    width = 0.85
+  ) +
+  geom_text(
+    aes(
+      x = bli_forecast_units_within_catchment + 1200,
+      label = scales::comma(round(bli_forecast_units_within_catchment)),
+      fontface = ifelse(shade != '1', 'plain', 'bold')
+    ),
+    size = 2
+  ) +
+  scale_fill_manual(values = c('1' = '#1B2A4A', '2' = '#A8C4E0', '3' = '#B4B2A9')) +
+
+  labs(
+    title    = 'New Housing in the Area',
+    subtitle = 'BLI Estimates on New Residential Units by 2035',
+    x = '', y = ''
+  ) +
+  theme_ipsum_pub(grid = FALSE) +
+  theme(legend.position = 'none', 
+        axis.text.x = element_blank(),
+        axis.text.y = element_text(size = rel(0.9), vjust = 0.5, lineheight = 0.85))
+
+new_housing_plt
+
+ggsave(plot = new_housing_plt, file = 'prc/new-housing-plt.png',
+       width = 9, height = 7, units = 'in', dpi = 1000)
+
+## new housing ####
+
+enroll_forecast <- elem_pps_info %>%
+  filter(ode_school_id %in% sw_pps_elem) %>%
+  select(ode_school_id, school_name,enrollment_forecast_2034_35_low,enrollment_forecast_2034_35_high,enrollment_forecast_2034_35) %>%
+  mutate(shade = case_when(ode_school_id == 1299 ~ '1', ode_school_id %in% sw_pps_elem ~ '2', T ~ '3'),
+         school_name = gsub(" Elementary School","",school_name)) %>%
+  pivot_longer(cols = contains('forecast')) %>%
+  mutate(name = case_when(
+    str_detect(name,'low') ~ 'low',
+    str_detect(name,'high') ~ 'high',
+    T ~ 'mid'
+  )) %>%
+  pivot_wider()
+                 
+
+enroll_forecast_plt <- ggplot(
+  enroll_forecast,
+  aes(y = reorder(school_name, mid), color = shade, fill = shade)
+) +
+  geom_boxplot(
+    aes(xmin = low, xlower = low, xmiddle = mid, xupper = high, xmax = high),
+    stat  = "identity",
+    width = 0.6,
+    alpha = 0.3
+  ) +
+  scale_color_manual(values = c('1' = '#1B2A4A', '2' = '#A8C4E0', '3' = '#B4B2A9')) +
+  scale_fill_manual(values  = c('1' = '#1B2A4A', '2' = '#A8C4E0', '3' = '#B4B2A9')) +
+  scale_x_continuous(labels = scales::comma) +
+  labs(
+    title    = 'PSU 2034-35 Enrollment Forecasts',
+    subtitle = 'Low, mid, and high scenarios',
+    x = 'Projected enrollment', y = ''
+  ) +
+  theme_ipsum_pub(grid = "X") +
+  theme(
+    legend.position = 'none')
+enroll_forecast_plt
+
+ggsave(plot = enroll_forecast_plt, file = 'prc/enroll-forecast-plt.png',
+       width = 9, height = 7, units = 'in', dpi = 1000)
+
 
 # map ####
+library(ggspatial)
 
+boundaries <- st_read("raw/boundaries/PPS_AttendanceBoundaries_20260423.shp") |>
+  st_transform(4326)
+
+boundaries_sw <- boundaries %>%
+  filter(K5 %in% c('Ainsworth',
+                   'Bridlemile',
+                   'Hayhurst',
+                   'Rieke',
+                   'Capitol Hill',
+                   'Maplewood',
+                   'Markham',
+                   'Stephenson'))
+
+sw_schools_geo <- dir %>%
+  filter(school_id %in% sw_pps_elem) %>%
+  st_as_sf(coords = c("lon", "lat"), crs = 4326) 
+  
+
+map <- ggplot() +
+  annotation_map_tile( type="osm", zoom = 12, quiet = TRUE) +
+  geom_sf(
+    data  = boundaries_sw,
+    aes(fill = K5),  
+    color = "white",
+    linewidth = 0.5,
+    alpha = 0.3
+  ) +
+  geom_sf(
+    data  = sw_schools_geo,
+    size = 2,
+    shape = 21,
+    fill  = "steelblue",
+    color = 'white'
+  ) +
+  geom_sf_text(
+    data  = sw_schools_geo,
+    aes(label = gsub(' Elem','',school_name)),
+    size  = 2.8,
+    nudge_y = 400
+  ) +
+  scale_fill_brewer(palette = "Set3", guide = "none") +
+  theme_ipsum_pub(grid = F) +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  )
+map
+
+ggsave(plot = map, 
+       "prc/pps_sw_map.png", 
+       width = 5, 
+       height = 8, 
+       units = 'in', 
+       dpi = 800)
+
+# population density ####
+
+age_vars <- c(
+  pop_total     = "B01001_001",
+  male_under5   = "B01001_003",
+  male_5_9      = "B01001_004",
+  male_10_14    = "B01001_005",
+  female_under5 = "B01001_027",
+  female_5_9    = "B01001_028",
+  female_10_14  = "B01001_029"
+)
+
+bg_pop <- get_acs(
+  geography = "block group",
+  variables = age_vars,
+  state     = "OR",
+  county    = "Multnomah",
+  year      = 2023,
+  survey    = "acs5",
+  geometry  = TRUE,
+  output    = "wide"
+) |>
+  st_transform(4326) |>
+  mutate(
+    pop_school_age = male_5_9E + male_10_14E + female_5_9E + female_10_14E,
+    pop_under5     = male_under5E + female_under5E,
+    pop_0_14       = pop_under5 + pop_school_age,
+    pct_0_14       = pop_0_14 / pop_totalE
+  )
+
+
+bg_sw <- bg_pop |>
+  st_filter(boundaries_sw, .predicate = st_intersects)
+
+
+map_with_pop <- ggplot() +
+  annotation_map_tile(type = "cartolight", zoom = 12, quiet = TRUE) +
+  geom_sf(
+    data  = bg_sw,
+    aes(fill = pop_0_14),
+    color = NA,
+    alpha = 0.5
+  ) +
+  geom_sf(
+    data      = boundaries_sw,
+    fill      = NA,
+    color     = "white",
+    linewidth = 0.8
+  ) +
+  geom_sf(
+    data   = sw_schools_geo,
+    size   = 3, shape = 21,
+    fill   = "steelblue", color = "white", stroke = 1.2
+  ) +
+  geom_sf_text(
+    data  = sw_schools_geo,
+    aes(label = gsub(' Elem','',school_name)),
+    size  = 2.8,
+    nudge_y = 400
+  ) +
+  scale_fill_viridis_c(
+    option = "mako",
+    direction = -1,
+    name   = "Children\naged 0-14",
+    labels = scales::comma
+  ) +
+  coord_sf(crs = 4326) +
+  labs(
+    title    = "PPS SW Portland Elementary Schools",
+    subtitle = "Block group population aged 0-14 (ACS 2023 5-year)"
+  ) +
+  theme_void() +
+  theme(
+    plot.title    = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 10, color = "grey40"),
+    plot.margin   = margin(10, 10, 10, 10)
+  )
+map_with_pop
