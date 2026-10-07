@@ -21,12 +21,14 @@ sliver_ft    <- 150
 sliver_acres <- 5
 
 current <- st_read(here("raw/boundaries/PPS_AttendanceBoundaries_20260423.shp"), quiet = TRUE) |>
+  st_zm() |>
   st_transform(work_crs) |>
   st_make_valid() |>
   group_by(school = K5) |>
   summarise(.groups = "drop")
 
 scenario <- st_read(here("raw/boundaries/PPS_ScenarioA_K5_Attendance_2027_28.shp"), quiet = TRUE) |>
+  st_zm() |>
   st_transform(work_crs) |>
   st_make_valid() |>
   mutate(school = recode(school,
