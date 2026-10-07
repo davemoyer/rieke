@@ -13,7 +13,12 @@ library(here)
 
 # work in Oregon North state plane (ft) so areas and buffers are in real units
 work_crs <- 2913
-sliver_acres <- 0.5  # drop pieces smaller than this; mostly digitizing noise between the two files
+
+# scenario A was digitized from a PDF map, so edges don't line up exactly with the
+# current boundaries. pieces that disappear after shrinking by this many feet are
+# treated as edge noise rather than real reassignments
+sliver_ft    <- 150
+sliver_acres <- 5
 
 current <- st_read(here("raw/boundaries/PPS_AttendanceBoundaries_20260423.shp"), quiet = TRUE) |>
   st_transform(work_crs) |>
@@ -21,29 +26,20 @@ current <- st_read(here("raw/boundaries/PPS_AttendanceBoundaries_20260423.shp"),
   group_by(school = K5) |>
   summarise(.groups = "drop")
 
-scen_path <- list.files(here("raw"), pattern = "scenario.?a.*\\.shp$",
-                        recursive = TRUE, full.names = TRUE, ignore.case = TRUE)
-stopifnot("Scenario A shapefile not found under raw/" = length(scen_path) == 1)
-
-scen_raw <- st_read(scen_path, quiet = TRUE) |>
+scenario <- st_read(here("raw/boundaries/PPS_ScenarioA_K5_Attendance_2027_28.shp"), quiet = TRUE) |>
   st_transform(work_crs) |>
-  st_make_valid()
-
-# pick the text column whose values best match current K5 names; override if it guesses wrong
-scen_col <- scen_raw |>
-  st_drop_geometry() |>
-  select(where(is.character)) |>
-  map_int(\(x) sum(unique(x) %in% current$school)) |>
-  which.max() |>
-  names()
-message("Using scenario A school column: ", scen_col)
-
-scenario <- scen_raw |>
-  group_by(school = .data[[scen_col]]) |>
+  st_make_valid() |>
+  mutate(school = recode(school,
+                         "Bridger Creative Science" = "Bridger",
+                         "Sunnyside Environmental"  = "Sunnyside",
+                         "(K-8 area north of Sitton)" = "Unassigned K-8 area")) |>
+  group_by(school) |>
   summarise(.groups = "drop")
 
-setdiff(current$school, scenario$school)  # schools without a boundary in scenario A
-setdiff(scenario$school, current$school)  # new or renamed schools
+closed_schools <- setdiff(current$school, scenario$school)
+new_schools    <- setdiff(scenario$school, current$school)
+closed_schools
+new_schools
 
 # changed areas ####
 
@@ -52,23 +48,30 @@ overlay <- st_intersection(
   scenario |> rename(new_school = school),
   current  |> rename(old_school = school)
 ) |>
-  st_collection_extract("POLYGON") |>
-  mutate(acres = as.numeric(st_area(geometry)) / 43560)
+  st_collection_extract("POLYGON")
+
+drop_slivers <- function(x) {
+  keep <- !st_is_empty(st_buffer(x, -sliver_ft))
+  x[keep, ] |>
+    mutate(acres = as.numeric(st_area(geometry)) / 43560) |>
+    filter(acres >= sliver_acres)
+}
 
 reassigned <- overlay |>
-  filter(new_school != old_school, acres >= sliver_acres)
+  filter(new_school != old_school) |>
+  drop_slivers()
 
 # scenario A territory that was outside every current boundary
 added <- st_difference(scenario, st_union(current)) |>
   st_collection_extract("POLYGON") |>
   rename(new_school = school) |>
-  mutate(old_school = "Outside current boundaries",
-         acres = as.numeric(st_area(geometry)) / 43560) |>
-  filter(acres >= sliver_acres)
+  mutate(old_school = "Outside current boundaries") |>
+  drop_slivers()
 
 new_areas <- bind_rows(reassigned, added) |>
   group_by(new_school, old_school) |>
-  summarise(acres = sum(acres), .groups = "drop")
+  summarise(acres = sum(acres), .groups = "drop") |>
+  mutate(from_closed = old_school %in% closed_schools)
 
 new_areas_summary <- new_areas |>
   st_drop_geometry() |>
@@ -77,75 +80,91 @@ new_areas_summary
 
 write_csv(new_areas_summary, here("prc/scenario-a-new-areas.csv"))
 
-# streets ####
+# map helper ####
 
-# map window: changed areas plus a half mile of context
-focus <- new_areas |>
-  st_union() |>
-  st_buffer(2640) |>
-  st_bbox()
+get_streets <- function(bbox, major_only = FALSE) {
+  road_types <- c("motorway", "trunk", "primary", "secondary", "tertiary")
+  if (!major_only) road_types <- c(road_types, "residential", "unclassified", "living_street")
 
-focus_4326 <- focus |>
-  st_as_sfc() |>
-  st_transform(4326) |>
-  st_bbox()
+  bbox_4326 <- bbox |> st_as_sfc() |> st_transform(4326) |> st_bbox()
 
-streets <- tryCatch(
-  opq(bbox = focus_4326, timeout = 120) |>
-    add_osm_feature(key = "highway",
-                    value = c("motorway", "trunk", "primary", "secondary", "tertiary",
-                              "residential", "unclassified", "living_street")) |>
+  opq(bbox = bbox_4326, timeout = 180) |>
+    add_osm_feature(key = "highway", value = road_types) |>
     osmdata_sf() |>
     pluck("osm_lines") |>
     select(name, highway) |>
-    st_transform(work_crs),
-  error = function(e) {
-    message("OSM download failed, falling back to TIGER roads: ", conditionMessage(e))
-    tigris::roads("OR", "Multnomah", progress_bar = FALSE) |>
-      transmute(name = FULLNAME,
-                highway = if_else(MTFCC %in% c("S1100", "S1200"), "primary", "residential")) |>
-      st_transform(work_crs)
-  }
+    st_transform(work_crs) |>
+    st_crop(bbox) |>
+    mutate(major = highway %in% c("motorway", "trunk", "primary", "secondary"))
+}
+
+map_new_areas <- function(bbox, streets, tile_zoom, title, subtitle) {
+  scen_crop <- st_crop(scenario, bbox)
+  curr_crop <- st_crop(current, bbox)
+  labels    <- st_point_on_surface(scen_crop)
+
+  ggplot() +
+    annotation_map_tile(type = "cartolight", zoom = tile_zoom, quiet = TRUE) +
+    geom_sf(data = st_crop(new_areas, bbox), aes(fill = new_school),
+            color = NA, alpha = 0.6) +
+    geom_sf(data = filter(streets, !major), color = "grey50", linewidth = 0.15) +
+    geom_sf(data = filter(streets, major), color = "grey30", linewidth = 0.5) +
+    geom_sf(data = curr_crop, fill = NA, color = "grey20",
+            linewidth = 0.4, linetype = "dashed") +
+    geom_sf(data = scen_crop, fill = NA, color = "black", linewidth = 0.8) +
+    geom_sf_label(data = labels, aes(label = school), size = 2.6,
+                  label.size = 0, fill = alpha("white", 0.8)) +
+    coord_sf(crs = work_crs, datum = NA,
+             xlim = bbox[c("xmin", "xmax")], ylim = bbox[c("ymin", "ymax")],
+             expand = FALSE) +
+    scale_fill_discrete(name = "Newly assigned to") +
+    labs(title = title, subtitle = subtitle,
+         caption = "Streets: OpenStreetMap contributors. Scenario A digitized from PPS map.") +
+    theme_ipsum_pub(grid = FALSE) +
+    theme(
+      axis.text  = element_blank(),
+      axis.title = element_blank(),
+      legend.position = "bottom",
+      plot.subtitle = element_text(size = 10, color = "grey40")
+    )
+}
+
+map_subtitle <- "Shaded areas change schools. Solid lines are Scenario A, dashed lines are current boundaries."
+
+# district map ####
+
+district_bbox    <- st_bbox(st_union(st_union(current), st_union(scenario)))
+district_streets <- get_streets(district_bbox, major_only = TRUE)
+
+district_plt <- map_new_areas(district_bbox, district_streets, tile_zoom = 12,
+                              title = "Scenario A: Areas Changing Elementary Schools",
+                              subtitle = map_subtitle)
+district_plt
+
+ggsave(plot = district_plt,
+       here("prc/scenario-a-new-areas-district.png"),
+       width = 12, height = 12, units = "in", dpi = 600)
+
+# SW map ####
+
+sw_schools <- c("Ainsworth", "Bridlemile", "Capitol Hill", "Hayhurst",
+                "Maplewood", "Markham", "Rieke", "Stephenson")
+
+sw_bbox <- bind_rows(
+  filter(current, school %in% sw_schools),
+  filter(scenario, school %in% sw_schools)
 ) |>
-  st_crop(focus) |>
-  mutate(major = highway %in% c("motorway", "trunk", "primary", "secondary"))
+  st_union() |>
+  st_buffer(1320) |>
+  st_bbox()
 
-# plot ####
+sw_streets <- get_streets(sw_bbox)
 
-scenario_focus <- st_crop(scenario, focus)
-current_focus  <- st_crop(current, focus)
+sw_plt <- map_new_areas(sw_bbox, sw_streets, tile_zoom = 14,
+                        title = "Scenario A: SW Portland Areas Changing Elementary Schools",
+                        subtitle = map_subtitle)
+sw_plt
 
-labels <- scenario_focus |>
-  st_point_on_surface()
-
-new_areas_plt <- ggplot() +
-  annotation_map_tile(type = "cartolight", zoom = 14, quiet = TRUE) +
-  geom_sf(data = new_areas, aes(fill = new_school), color = NA, alpha = 0.55) +
-  geom_sf(data = filter(streets, !major), color = "grey45", linewidth = 0.2) +
-  geom_sf(data = filter(streets, major), color = "grey25", linewidth = 0.6) +
-  geom_sf(data = current_focus, fill = NA, color = "grey20",
-          linewidth = 0.5, linetype = "dashed") +
-  geom_sf(data = scenario_focus, fill = NA, color = "black", linewidth = 0.9) +
-  geom_sf_label(data = labels, aes(label = school), size = 3,
-                label.size = 0, fill = alpha("white", 0.8)) +
-  coord_sf(crs = work_crs, datum = NA,
-           xlim = focus[c("xmin", "xmax")], ylim = focus[c("ymin", "ymax")],
-           expand = FALSE) +
-  scale_fill_brewer(palette = "Set2", name = "Newly assigned to") +
-  labs(
-    title    = "Scenario A: Areas Changing Elementary Schools",
-    subtitle = "Shaded areas move to a new school. Solid lines are Scenario A, dashed lines are current boundaries.",
-    caption  = "Streets: OpenStreetMap contributors"
-  ) +
-  theme_ipsum_pub(grid = FALSE) +
-  theme(
-    axis.text  = element_blank(),
-    axis.title = element_blank(),
-    legend.position = "bottom",
-    plot.subtitle = element_text(size = 10, color = "grey40")
-  )
-new_areas_plt
-
-ggsave(plot = new_areas_plt,
-       here("prc/scenario-a-new-areas-map.png"),
-       width = 9, height = 10, units = "in", dpi = 600)
+ggsave(plot = sw_plt,
+       here("prc/scenario-a-new-areas-sw.png"),
+       width = 9, height = 11, units = "in", dpi = 600)
