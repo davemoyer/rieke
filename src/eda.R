@@ -70,6 +70,9 @@ bps_elem <- c(1278, #Montclair
               1173 #Raleigh Park Elem
 )
 
+dist_enroll <- enroll %>%
+  filter(level == 'district' & is.na(school_id) & grade == 'all' & student_group == 'all')
+
 # palette ####
 rieke_colors <- c(
   navy   = "#1B2A4A",
@@ -139,6 +142,84 @@ enroll_change_plt
 ggsave(
   plot = enroll_change_plt,
   file = 'prc/enroll-change-plt.png',
+  width = 9,
+  height = 6,
+  units = 'in',
+  dpi = 800
+)
+
+## dist enrollment change ####
+
+peer_districts <- c(2180, # Portland
+                    2243, # Beaverton
+                    2142, # Salem-Keizer
+                    2239, # Hillsboro
+                    1924, # North Clackamas
+                    2082, # Eugene
+                    2048  # Medford
+)
+
+
+dist_enroll_all <- dist_enroll %>%
+  filter((district_id %in% peer_districts) &
+           student_group == 'all') %>%
+  mutate(shade = ifelse(district_name == 'Portland SD 1J', "1", "2"),
+         district_short = gsub(" SD.*", "", district_name))
+
+dist_enroll_change <- dist_enroll_all %>%
+  filter(school_year %in% c(2019,2026)) %>%
+  arrange(district_id,school_year) %>%
+  group_by(district_id) %>%
+  mutate(enroll_change = fall_ct-lag(fall_ct),
+         enroll_change_pct = 100*(fall_ct-lag(fall_ct))/lag(fall_ct)) %>%
+  select(district_id,school_year,enroll_change,enroll_change_pct) %>%
+  filter(school_year == 2026)
+
+dist_enroll_all_with_change <- dist_enroll_all %>%
+  left_join(dist_enroll_change, by = c('district_id','school_year'))
+
+dist_enroll_change_plt <- ggplot(dist_enroll_all_with_change, aes(school_year, fall_ct, group = district_id)) +
+  geom_line(aes(color = shade)) +
+  geom_point(aes(color = shade)) +
+  geom_text_repel(
+    data        = \(x) slice_max(x, school_year, n = 1, by = district_id),
+    aes(label   = paste0(district_short, ": ", scales::comma(fall_ct), ' (',round(enroll_change_pct),'%)'), color = shade),
+    hjust       = 0,
+    nudge_x     = 0.2,
+    direction   = "y",
+    segment.color = NA
+  ) +
+  geom_text_repel(
+    data        = \(x) slice_min(x, school_year, n = 1, by = district_id),
+    aes(label   = scales::comma(fall_ct), color = shade),
+    hjust       = 1,
+    nudge_x     = -0.2,
+    direction   = "y",
+    segment.color = NA
+  ) +
+  scale_color_manual(values = c(
+    "1"       = "#1B2A4A",
+    "2" = "#B4B2A9",
+    "3" = "#B4B2A9"
+  )) +
+  scale_x_continuous(limits = c(2018.75,2029),
+                     breaks = 2019:2026,
+                     labels = 2019:2026) +
+  ylim(10000,49000) +
+  labs(x = "",
+       y = "",
+       title = 'PPS enrollment is down sharply, in line with its peers',
+       subtitle = 'Fall Enrollment Change since 2019',
+       caption = 'Source: Oregon Dept. of Education') +
+  theme_ipsum_pub(grid = FALSE) +
+  theme(legend.position = "none",
+        axis.text.y = element_blank())
+
+dist_enroll_change_plt
+
+ggsave(
+  plot = dist_enroll_change_plt,
+  file = 'prc/dist-enroll-change-plt.png',
   width = 9,
   height = 6,
   units = 'in',
@@ -894,6 +975,236 @@ fin_sw_plt
 ggsave(plot = fin_sw_plt, file = 'prc/fin-sw-plt.png',
        width = 8, height = 5.5, units = 'in', dpi = 800)
 
+## district context ####
+
+
+dist_funding_files <- list.files("raw/funding/dist",
+                            pattern = "*.xls*",
+                            full.names = TRUE)
+
+dist_funding_csvs <- list.files('raw/funding/dist',
+                          pattern = "Actual Expenditure Data.csv$",
+                           full.names = TRUE)
+
+dist_funding_raw <- bind_rows(
+  map(dist_funding_files, function(file) {
+    sheets <- excel_sheets(file)
+    data_sheet <- sheets[!str_detect(sheets, "(?i)definition|note")]
+    read_excel(file, sheet = data_sheet[1], col_types = "text") |>
+      clean_names() |>
+      mutate(source_file = basename(file))
+  }),
+  map(dist_funding_csvs, function(file) {
+    read_csv(file, col_types = cols(.default = "c"), show_col_types = FALSE) |>
+      clean_names() |>
+      mutate(source_file = basename(file))
+  })
+)
+
+
+## dist per-pupil funding change ####
+
+dist_spending <- dist_funding_raw %>%
+  mutate(actual_exp_amt = as.numeric(actual_exp_amt),
+         school_year = case_match(school_year,
+           '2018-19' ~ 2019,
+           '2019-20' ~ 2020,
+           '2020-21' ~ 2021,
+           '2021-22' ~ 2022,
+           '2022-23' ~ 2023,
+           '2023-24' ~ 2024,
+           '2024-25' ~ 2025,
+           '2025-26' ~ 2026
+         ),
+         institution_id = as.numeric(institution_id)) %>%
+  rename(district_id = institution_id,
+         district_name = institution_name) %>%
+  group_by(school_year,district_id) %>%
+  summarise(district_name = first(district_name),
+            exp = sum(actual_exp_amt))
+
+dist_pp_all <- dist_spending %>%
+  filter(district_id %in% peer_districts) %>%
+  left_join(
+    dist_enroll %>% select(district_id, school_year, ct = fall_ct),
+    by = c('district_id','school_year')
+  ) %>%
+  mutate(per_pupil = exp / ct,
+         shade = ifelse(district_name == 'Portland SD 1J', "1", "2"),
+         district_short = gsub(" SD.*", "", district_name)) %>%
+  filter(school_year %in% c(2019,2022,2023,2024,2025))
+
+pp_first_yr <- min(dist_pp_all$school_year)
+pp_last_yr  <- max(dist_pp_all$school_year)
+
+dist_pp_change <- dist_pp_all %>%
+  filter(school_year %in% c(pp_first_yr,pp_last_yr)) %>%
+  arrange(district_id,school_year) %>%
+  group_by(district_id) %>%
+  mutate(pp_change_pct = 100*(per_pupil-lag(per_pupil))/lag(per_pupil),
+         exp_change_pct = 100*(exp -lag(exp))/lag(exp)) %>%
+  select(district_id,school_year,pp_change_pct,exp_change_pct) %>%
+  filter(school_year == pp_last_yr)
+
+dist_pp_all_with_change <- dist_pp_all %>%
+  left_join(dist_pp_change, by = c('district_id','school_year')) %>%
+  ungroup()
+
+dist_pp_change_plt <- ggplot(dist_pp_all_with_change, aes(school_year, exp, group = district_id)) +
+  geom_line(aes(color = shade)) +
+  geom_point(aes(color = shade)) +
+  geom_text_repel(
+    data        = \(x) slice_max(x, school_year, n = 1, by = district_id),
+    aes(label   = paste0(district_short, ": ", scales::dollar(exp, scale = 1e-6, suffix = "M", accuracy = 1), ' (+',round(exp_change_pct),'%)'), color = shade),
+    hjust       = 0,
+    nudge_x     = 0.2,
+    direction   = "y",
+    segment.color = NA
+  ) +
+  geom_text_repel(
+    data        = \(x) slice_min(x, school_year, n = 1, by = district_id),
+    aes(label   = scales::dollar(exp, scale = 1e-6, suffix = "M", accuracy = 1), color = shade),
+    hjust       = 1,
+    nudge_x     = -0.2,
+    direction   = "y",
+    segment.color = NA
+  ) +
+  scale_color_manual(values = c(
+    "1"       = "#1B2A4A",
+    "2" = "#B4B2A9",
+    "3" = "#B4B2A9"
+  )) +
+  scale_x_continuous(limits = c(pp_first_yr - 0.25, pp_last_yr + 2),
+                     breaks = pp_first_yr:pp_last_yr,
+                     labels = pp_first_yr:pp_last_yr) +
+  labs(x = "",
+       y = "",
+       title = "PPS' Spending Has Grown since the Pandemic, along with its peers",
+       subtitle = paste0('Overall Expenditures Change Since ', pp_first_yr),
+       caption = 'Source: Actual Reported Ependitures from Oregon Dept. of Education') +
+  theme_ipsum_pub(grid = FALSE) +
+  theme(legend.position = "none",
+        axis.text.y = element_blank())
+
+dist_pp_change_plt
+
+ggsave(
+  plot = dist_pp_change_plt,
+  file = 'prc/dist-pp-change-plt.png',
+  width = 9,
+  height = 6,
+  units = 'in',
+  dpi = 1000
+)
+
+## PPS revenue by source ####
+
+revenue_files <- list.files("raw/funding/dist", pattern = "Actual Revenue Data.csv$", full.names = TRUE)
+
+pps_revenue <- revenue_files %>%
+  map_df(read_csv) %>%
+  filter(Institution_Name == "Portland SD 1J")
+
+# General Fund contains two non-recurring accounting lines that distort a
+# revenue trend: bond proceeds ("Long Term Debt Financing Sources") and last
+# year's carryover cash ("Resources - Beginning Fund Balance"). Neither is
+# new operating money, so they're excluded from "core" General Fund revenue.
+core_general_fund <- pps_revenue %>%
+  filter(FundDesc == "General Fund",
+         !SourceDesc %in% c("Long Term Debt Financing Sources",
+                            "Resources - Beginning Fund Balance")) %>%
+  group_by(SchoolYear) %>%
+  summarise(core_general_fund = sum(ActualRevAmt))
+
+
+federal_fund <- pps_revenue %>%
+  filter(FundDesc == "Federal Sources") %>%
+  group_by(SchoolYear) %>%
+  summarise(federal_fund = sum(ActualRevAmt))
+
+state_school_fund <- pps_revenue %>%
+  filter(SourceDesc == "State School Fund --General Support") %>%
+  group_by(SchoolYear) %>%
+  summarise(state_school_fund = sum(ActualRevAmt))
+
+property_tax <- pps_revenue %>%
+  filter(SourceDesc == "Ad valorem taxes levied by district") %>%
+  group_by(SchoolYear) %>%
+  summarise(property_tax = sum(ActualRevAmt))
+
+# bond proceeds - the one-time financing entry that drove the 2021-22 spike,
+# broken back out as its own series to show it explicitly rather than
+# folding it into (or excluding it from) general fund revenue
+bond_proceeds <- pps_revenue %>%
+  filter(SourceDesc == "Long Term Debt Financing Sources") %>%
+  group_by(SchoolYear) %>%
+  summarise(bond_proceeds = sum(ActualRevAmt))
+
+pps_revenue_by_source <- federal_fund %>%
+  left_join(state_school_fund, by = "SchoolYear") %>%
+  left_join(property_tax, by = "SchoolYear") %>%
+  left_join(bond_proceeds, by = "SchoolYear") %>%
+  mutate(federal_fund = replace_na(federal_fund, 0),
+         bond_proceeds = replace_na(bond_proceeds, 0))
+
+print(pps_revenue_by_source)
+
+series_labels <- c(federal_fund      = "Federal Sources fund",
+                   state_school_fund = "State School Fund",
+                   property_tax      = "Property tax (ad valorem)",
+                   bond_proceeds     = "Bond proceeds")
+
+pps_revenue_long <- pps_revenue_by_source %>%
+  select(SchoolYear,
+         federal_fund,
+         state_school_fund,
+         property_tax,
+         bond_proceeds) %>%
+  pivot_longer(-SchoolYear, names_to = "series", values_to = "amount") %>%
+  mutate(series_label = series_labels[series],
+         year_num = as.numeric(substr(SchoolYear, 1, 4)))
+
+year_breaks <- pps_revenue_long %>% distinct(year_num, SchoolYear) %>% arrange(year_num)
+
+p_revenue <- ggplot(pps_revenue_long, aes(year_num, amount, group = series, color = series)) +
+  geom_line(linewidth = 1) +
+  geom_point() +
+  geom_text_repel(
+    data          = \(x) slice_max(x, year_num, n = 1, by = series),
+    aes(label     = paste0(series_label, ": ", scales::dollar(amount, scale = 1e-6, suffix = "M", accuracy = 1))),
+    hjust         = 0,
+    nudge_x       = 0.2,
+    direction     = "y",
+    segment.color = NA
+  ) +
+  geom_text_repel(
+    data          = \(x) slice_min(x, year_num, n = 1, by = series),
+    aes(label     = scales::dollar(amount, scale = 1e-6, suffix = "M", accuracy = 1)),
+    hjust         = 1,
+    nudge_x       = -0.2,
+    direction     = "y",
+    segment.color = NA
+  ) +
+  scale_color_manual(values = c(
+    bond_proceeds     = "darkgrey",
+    federal_fund      = "#B4863C",
+    state_school_fund = "#1B2A4A",
+    property_tax      = "#6E8B7C"
+  )) +
+  scale_x_continuous(limits = c(min(year_breaks$year_num) - 0.25, max(year_breaks$year_num) + 2),
+                     breaks = year_breaks$year_num,
+                     labels = year_breaks$SchoolYear) +
+  labs(x = "", y = "",
+       title = "PPS Revenues Over Time",
+       caption = "Source: Selected major categories of reported revenues from Oregon Dept. of Education") +
+  theme_ipsum_pub(grid = FALSE) +
+  theme(legend.position = "none",
+        axis.text.y = element_blank())
+p_revenue
+
+ggsave("prc/pps-revenue-by-source-plt.png", p_revenue, width = 9, height = 6, dpi = 1000)
+
+
 
 # attendance ####
 
@@ -1478,3 +1789,93 @@ map_with_pop <- ggplot() +
     plot.margin   = margin(10, 10, 10, 10)
   )
 map_with_pop
+
+# school size to performance ####
+
+e_all <- enroll_pps %>%
+  filter(student_group == "all") %>%
+  select(school_year, school_id, school_short, enroll = ct)
+
+e_frl <- enroll_pps %>%
+  filter(student_group == "direct_cert") %>%
+  select(school_year, school_id, frl_pct = pct)
+
+# school-level proficiency, elementary only, all-grade rows
+
+pps_size_perf <- e_all %>%
+  left_join(e_frl, by = c("school_year", "school_id")) %>%
+  inner_join(pps_elem_prof %>% select(school_year,school_id, school_name,subject,pct_proficient), by = c("school_year", "school_id"))
+
+pps_size_perf_wide <- pps_size_perf %>%
+  pivot_wider(names_from = 'subject', values_from = 'pct_proficient')
+
+
+# 2025 cross-section, run separately per subject: FRL explains most of the
+# variance in each subject; enrollment adds little on its own
+df25 <- pps_size_perf %>% filter(school_year == 2025)
+
+subject_models_2025 <- df25 %>%
+  group_by(subject) %>%
+  group_map(~ lm(pct_proficient ~ frl_pct + enroll, data = .x), .keep = TRUE) %>%
+  set_names(unique(df25$subject))
+
+walk2(subject_models_2025, names(subject_models_2025), ~ {
+  cat("---", .y, "(2025 cross-section) ---\n")
+  print(summary(.x)$coefficients)
+})
+
+
+# residual = actual proficiency minus what FRL alone predicts
+df25$resid <- resid(m_frl)
+
+# pooled panel with year fixed effects, clustered SEs by school (needs `estimatr`)
+# library(estimatr)
+# m_panel <- lm_robust(prof_avg ~ frl_pct + enroll + factor(school_year),
+#                       data = pps_size_perf, clusters = school_short)
+# summary(m_panel)
+
+# chart: enrollment vs FRL-adjusted residual, Rieke highlighted
+p <- ggplot(pps_size_perf, aes(x = enroll, y = resid)) +
+  geom_point(aes(color = school_short == "Rieke",
+                 size = school_short == "Rieke")) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey50") +
+  scale_color_manual(values = c("TRUE" = "#c0392b", "FALSE" = "grey40"), guide = "none") +
+  scale_size_manual(values = c("TRUE" = 4, "FALSE" = 2), guide = "none") +
+  labs(title = "School size vs. proficiency, net of FRL (PPS elementary, 2025)",
+       subtitle = "Flat pattern: enrollment adds little once poverty rate is accounted for",
+       x = "Enrollment", y = "Residual proficiency (points vs. FRL-predicted)") +
+  theme_ipsum_pub()
+
+ggsave("prc/size-perf-frl-resid-plt.png", p, width = 8, height = 5.5, dpi = 300)
+
+# school size versus spending ####
+pps_size_spend_perf <- pps_size_perf %>%
+  filter(school_year == 2025) %>%
+  left_join(pps_fin_rank %>% select(school_id,school_short,school_year,total_exp, per_pupil_exp), by = c('school_id','school_year'))
+
+pps_size_spend_perf_clean <- pps_size_spend_perf %>%
+  filter(!school_short.x %in% c("Whitman", "Clark")) %>%
+  distinct(school_id, school_short.x, enroll, per_pupil_exp)
+
+m_size_cost <- lm(per_pupil_exp ~ enroll, data = pps_size_spend_perf_clean)
+summary(m_size_cost)
+
+# naive size -> cost relationship (what we ran last time, FRL left out)
+m_cost_naive <- lm(per_pupil_exp ~ enroll, data = pps_size_spend_perf)
+cat("--- cost ~ enroll only ---\n")
+print(summary(m_cost_naive)$coefficients)
+cat("R2:", summary(m_cost_naive)$r.squared, "\n\n")
+
+# does size still predict cost once FRL is controlled for?
+m_cost_frl <- lm(per_pupil_exp ~ enroll + frl_pct, data = pps_size_spend_perf)
+cat("--- cost ~ enroll + frl_pct ---\n")
+print(summary(m_cost_frl)$coefficients)
+cat("R2:", summary(m_cost_frl)$r.squared, "\n\n")
+
+m_perf <- lm(pct_proficient ~ frl_pct + enroll + per_pupil_exp, data = pps_size_spend_perf %>% filter(subject == 'math'))
+cat("--- prof_avg ~ frl_pct + enroll + per_pupil_exp ---\n")
+print(summary(m_perf)$coefficients)
+cat("R2:", summary(m_perf)$r.squared, "\n\n")
+
+# edunomics scatter ####
+
