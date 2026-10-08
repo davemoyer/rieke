@@ -6,7 +6,6 @@ library(tidyverse)
 library(sf)
 library(ggspatial)
 library(hrbrthemes)
-library(osmdata)
 library(here)
 
 # data ####
@@ -37,6 +36,12 @@ scenario <- st_read(here("raw/boundaries/PPS_ScenarioA_K5_Attendance_2027_28.shp
                          "(K-8 area north of Sitton)" = "Unassigned K-8 area")) |>
   group_by(school) |>
   summarise(.groups = "drop")
+
+hillsdale <- st_read(here("raw/boundaries/Neighborhood_Boundaries.shp"), quiet = TRUE) |>
+  st_zm() |>
+  st_transform(work_crs) |>
+  st_make_valid() |>
+  filter(NAME %in% c('HILLSDALE','MULTONOMAH'))
 
 closed_schools <- setdiff(current$school, scenario$school)
 new_schools    <- setdiff(scenario$school, current$school)
@@ -82,91 +87,121 @@ new_areas_summary
 
 write_csv(new_areas_summary, here("prc/scenario-a-new-areas.csv"))
 
-# map helper ####
-
-get_streets <- function(bbox, major_only = FALSE) {
-  road_types <- c("motorway", "trunk", "primary", "secondary", "tertiary")
-  if (!major_only) road_types <- c(road_types, "residential", "unclassified", "living_street")
-
-  bbox_4326 <- bbox |> st_as_sfc() |> st_transform(4326) |> st_bbox()
-
-  opq(bbox = bbox_4326, timeout = 180) |>
-    add_osm_feature(key = "highway", value = road_types) |>
-    osmdata_sf() |>
-    pluck("osm_lines") |>
-    select(name, highway) |>
-    st_transform(work_crs) |>
-    st_crop(bbox) |>
-    mutate(major = highway %in% c("motorway", "trunk", "primary", "secondary"))
-}
-
-map_new_areas <- function(bbox, streets, tile_zoom, title, subtitle) {
-  scen_crop <- st_crop(scenario, bbox)
-  curr_crop <- st_crop(current, bbox)
-  labels    <- st_point_on_surface(scen_crop)
-
-  ggplot() +
-    annotation_map_tile(type = "cartolight", zoom = tile_zoom, quiet = TRUE) +
-    geom_sf(data = st_crop(new_areas, bbox), aes(fill = new_school),
-            color = NA, alpha = 0.6) +
-    geom_sf(data = filter(streets, !major), color = "grey50", linewidth = 0.15) +
-    geom_sf(data = filter(streets, major), color = "grey30", linewidth = 0.5) +
-    geom_sf(data = curr_crop, fill = NA, color = "grey20",
-            linewidth = 0.4, linetype = "dashed") +
-    geom_sf(data = scen_crop, fill = NA, color = "black", linewidth = 0.8) +
-    geom_sf_label(data = labels, aes(label = school), size = 2.6,
-                  label.size = 0, fill = alpha("white", 0.8)) +
-    coord_sf(crs = work_crs, datum = NA,
-             xlim = bbox[c("xmin", "xmax")], ylim = bbox[c("ymin", "ymax")],
-             expand = FALSE) +
-    scale_fill_discrete(name = "Newly assigned to") +
-    labs(title = title, subtitle = subtitle,
-         caption = "Streets: OpenStreetMap contributors. Scenario A digitized from PPS map.") +
-    theme_ipsum_pub(grid = FALSE) +
-    theme(
-      axis.text  = element_blank(),
-      axis.title = element_blank(),
-      legend.position = "bottom",
-      plot.subtitle = element_text(size = 10, color = "grey40")
-    )
-}
-
-map_subtitle <- "Shaded areas change schools. Solid lines are Scenario A, dashed lines are current boundaries."
-
-# district map ####
-
-district_bbox    <- st_bbox(st_union(st_union(current), st_union(scenario)))
-district_streets <- get_streets(district_bbox, major_only = TRUE)
-
-district_plt <- map_new_areas(district_bbox, district_streets, tile_zoom = 12,
-                              title = "Scenario A: Areas Changing Elementary Schools",
-                              subtitle = map_subtitle)
-district_plt
-
-ggsave(plot = district_plt,
-       here("prc/scenario-a-new-areas-district.png"),
-       width = 12, height = 12, units = "in", dpi = 600)
-
 # SW map ####
 
-sw_schools <- c("Ainsworth", "Bridlemile", "Capitol Hill", "Hayhurst",
-                "Maplewood", "Markham", "Rieke", "Stephenson")
+sw_schools <- c("Ainsworth", 
+                "Bridlemile", 
+                "Capitol Hill", 
+                "Hayhurst",
+                "Maplewood", 
+                "Markham", 
+                "Rieke", 
+                "Stephenson")
 
+# buffer around the SW schools' current and scenario boundaries
 sw_bbox <- bind_rows(
   filter(current, school %in% sw_schools),
   filter(scenario, school %in% sw_schools)
 ) |>
   st_union() |>
-  st_buffer(1320) |>
+  st_buffer(500) |>
   st_bbox()
 
-sw_streets <- get_streets(sw_bbox)
+sw_streets <- st_read(here("raw/boundaries/Streets.shp"), quiet = TRUE) |>
+  st_zm() |>
+  st_transform(work_crs) |>
+  st_crop(sw_bbox)
 
-sw_plt <- map_new_areas(sw_bbox, sw_streets, tile_zoom = 14,
-                        title = "Scenario A: SW Portland Areas Changing Elementary Schools",
-                        subtitle = map_subtitle)
+sw_scenario <- st_crop(scenario, sw_bbox)
+sw_current  <- st_crop(current, sw_bbox)
+
+maplewood  <- c(-122.73025883624236, 45.47087272875078)
+stephenson <- c(-122.70397203129284, 45.440846087570804)
+rieke <- c(-122.6951463020293,45.476384894023845)
+hayhurst <- c(-122.72912815229604,45.48011260329334)
+capitol_hill <- c(-122.69538301552195, 45.464083746341515)
+markham <- c(-122.72455397329051,45.449526434268996)
+ainsworth <- c(45.5098799,-122.6998559)
+
+sw_points <- tribble(
+  ~label,         ~lon,                ~lat,
+  "Maplewood",    -122.73025883624236, 45.47087272875078,
+  "Stephenson",   -122.70397203129284, 45.440846087570804,
+  "Rieke",        -122.6951463020293,  45.476384894023845,
+  "Hayhurst",     -122.72912815229604, 45.48011260329334,
+  "Capitol Hill", -122.69538301552195, 45.464083746341515,
+  "Markham",      -122.72455397329051,45.449526434268996,
+  'Ainsworth',    -122.6998559, 45.5098799,
+  'Bridlemile',     -122.7242829, 45.4917482
+) |>
+  st_as_sf(coords = c("lon", "lat"), crs = 4326) |>
+  st_transform(work_crs) |>
+  mutate(status = if_else(label %in% closed_schools, "Closed", "Open"))
+
+sw_new_areas <- st_crop(new_areas, sw_bbox)
+
+# Rieke's color from the default fill palette, lightened to match the 0.6 alpha shading
+fill_levels <- sort(unique(sw_new_areas$new_school))
+rieke_fill  <- scales::hue_pal()(length(fill_levels))[fill_levels == "Rieke"]
+rieke_fill  <- colorRampPalette(c("white", rieke_fill))(11)[7]
+
+callouts <- new_areas |>
+  filter(new_school == "Rieke", old_school %in% c("Hayhurst", "Maplewood")) |>
+  st_point_on_surface() |>
+  mutate(label = str_glue("From {old_school}"),
+         x = st_coordinates(geometry)[, 1],
+         y = st_coordinates(geometry)[, 2],
+         # label offsets from the area, in feet (east/north are positive)
+         label_x = x + case_match(old_school, "Hayhurst" ~ 3000, "Maplewood" ~ 4400),
+         label_y = y + case_match(old_school, "Hayhurst" ~ 300,  "Maplewood" ~ -2900)) |>
+  st_drop_geometry()
+callouts
+
+sw_plt <- ggplot() +
+  #annotation_map_tile(type = "cartolight", zoom = 14, quiet = TRUE) +
+  geom_sf(data = sw_new_areas, aes(fill = new_school),
+          color = NA, alpha = 0.6) +
+  geom_sf(data = sw_streets, color = "grey50", linewidth = 0.15) +
+  geom_sf(data = sw_current, fill = NA, color = "grey20",
+          linewidth = 0.4, linetype = "dashed") +
+  geom_sf(data = sw_scenario, fill = NA, color = "black", linewidth = 0.8) +
+  #geom_sf(data = hillsdale, fill = NA, color = "#7b3294", linewidth = 1.2) +   # Hillsdale neighborhood outline
+  geom_sf(data = sw_points, aes(shape = status, color = status),
+          size = 2, stroke = 1.5, show.legend = FALSE) +
+  geom_sf_label(data = st_point_on_surface(sw_scenario), aes(label = school),
+                size = 2.6, label.size = 0, fill = alpha("white", 0.8)) +
+  # callouts: leader line from the area to a label parked in open space
+  geom_segment(data = callouts,
+               aes(x = x, y = y, xend = label_x, yend = label_y),
+               color = "grey20", linewidth = 0.3) +
+  geom_label(data = callouts,
+             aes(x = label_x, y = label_y, label = label),
+             size = 2.6, label.size = 0, fill = rieke_fill) +
+  coord_sf(crs = work_crs, datum = NA,
+           xlim = sw_bbox[c("xmin", "xmax")], ylim = sw_bbox[c("ymin", "ymax")],
+           expand = FALSE) +
+  scale_fill_discrete(name = "Newly assigned to") +
+  scale_shape_manual(name = "School site",
+                     values = c("Closed" = 4, "Open" = 16),
+                     guide = 'none') +
+  scale_color_manual(name = "School site",
+                     values = c("Closed" = "#d7191c", "Open" = "black"),
+                     guide = 'none') +
+  labs(title = "Scenario A: SW Portland Changing Elementary Schools",
+       subtitle = "Shaded areas change schools. Solid lines are Scenario A, dashed lines are current boundaries.\nPurple outline is the Hillsdale neighborhood.",
+       caption = "Scenario A digitized from PPS map - may contain errors",
+       x = NULL, y = NULL) +
+  theme_ipsum_pub(grid = FALSE) +
+  theme(
+    axis.text  = element_blank(),
+    legend.position = "bottom",
+    plot.subtitle = element_text(size = 10, color = "grey40")
+  )
 sw_plt
 
-ggsave(plot = sw_plt,
-       here("prc/scenario-a-new-areas-sw.png"),
-       width = 9, height = 11, units = "in", dpi = 600)
+walk(c("png", "pdf"), \(ext) {
+  ggsave(plot = sw_plt,
+         here(str_glue("prc/scenario-a-new-areas-sw.{ext}")),
+         width = 8.5, height = 11, units = "in", dpi = 600,
+         device = if (ext == "pdf") cairo_pdf else NULL)
+})
